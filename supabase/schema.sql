@@ -1,4 +1,4 @@
--- Warga Kemang Database Schema (UPDATED)
+-- Warga Kemang Database Schema (UPDATED v2)
 -- Run this in Supabase SQL Editor
 
 -- JIKA SUDAH ADA TABEL SEBELUMNYA, HAPUS DULU:
@@ -19,7 +19,7 @@ create table if not exists public.users (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Create warga table (UPDATED - removed alamat_kampung, added defaults)
+-- Create warga table (UPDATED - added hubungan_keluarga and foto_ktp)
 create table if not exists public.warga (
   id uuid default uuid_generate_v4() primary key,
   nik varchar(16) not null unique,
@@ -41,6 +41,8 @@ create table if not exists public.warga (
   kewarganegaraan varchar(5) not null default 'WNI',
   no_kk varchar(16),
   no_wa varchar(20),
+  hubungan_keluarga varchar(20) default 'Kepala Keluarga',
+  foto_ktp text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -129,3 +131,10 @@ create policy "RT can delete own warga" on public.warga
       and users.rw = warga.rw
     )
   );
+
+
+-- =====================================================
+-- MIGRATION: Jika sudah ada tabel warga, tambahkan kolom baru:
+-- =====================================================
+-- ALTER TABLE public.warga ADD COLUMN IF NOT EXISTS hubungan_keluarga varchar(20) default 'Kepala Keluarga';
+-- ALTER TABLE public.warga ADD COLUMN IF NOT EXISTS foto_ktp text;

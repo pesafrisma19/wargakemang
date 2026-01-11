@@ -35,7 +35,8 @@ export default async function DashboardLayout({
                 userRT={userRT}
                 userRW={userRW}
             />
-            <main className="lg:ml-64 min-h-screen">
+            {/* Main content with padding for mobile header/footer and desktop sidebar */}
+            <main className="lg:ml-64 min-h-screen pt-16 pb-20 lg:pt-0 lg:pb-0">
                 <div className="p-4 lg:p-8">
                     {children}
                 </div>

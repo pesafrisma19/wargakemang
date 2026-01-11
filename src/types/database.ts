@@ -10,6 +10,16 @@ export type StatusKawin = 'Belum Kawin' | 'Kawin' | 'Cerai Hidup' | 'Cerai Mati'
 
 export type Agama = 'Islam' | 'Kristen' | 'Katolik' | 'Hindu' | 'Buddha' | 'Konghucu';
 
+export type HubunganKeluarga =
+  | 'Kepala Keluarga'
+  | 'Istri'
+  | 'Anak'
+  | 'Orang Tua'
+  | 'Mertua'
+  | 'Menantu'
+  | 'Cucu'
+  | 'Famili Lain';
+
 export interface User {
   id: string;
   phone: string;
@@ -41,6 +51,8 @@ export interface Warga {
   kewarganegaraan: string;
   no_kk: string | null;
   no_wa: string | null;
+  hubungan_keluarga: HubunganKeluarga;
+  foto_ktp: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -63,6 +75,14 @@ export interface WargaInput {
   kewarganegaraan?: string;
   no_kk?: string | null;
   no_wa?: string | null;
+  hubungan_keluarga?: HubunganKeluarga;
+  foto_ktp?: string | null;
+}
+
+export interface Keluarga {
+  no_kk: string;
+  anggota: Warga[];
+  kepala_keluarga: Warga | null;
 }
 
 export interface DashboardStats {
@@ -83,6 +103,17 @@ export const AGAMA_OPTIONS: Agama[] = ['Islam', 'Kristen', 'Katolik', 'Hindu', '
 export const STATUS_KAWIN_OPTIONS: StatusKawin[] = ['Belum Kawin', 'Kawin', 'Cerai Hidup', 'Cerai Mati'];
 
 export const GOLONGAN_DARAH_OPTIONS: GolonganDarah[] = ['A', 'B', 'AB', 'O', '-'];
+
+export const HUBUNGAN_KELUARGA_OPTIONS: HubunganKeluarga[] = [
+  'Kepala Keluarga',
+  'Istri',
+  'Anak',
+  'Orang Tua',
+  'Mertua',
+  'Menantu',
+  'Cucu',
+  'Famili Lain',
+];
 
 // Default values
 export const DEFAULT_DESA = 'Kemang';

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -8,22 +8,25 @@ import {
     AGAMA_OPTIONS,
     STATUS_KAWIN_OPTIONS,
     GOLONGAN_DARAH_OPTIONS,
+    HUBUNGAN_KELUARGA_OPTIONS,
     RW_RT_STRUCTURE,
     User,
     DEFAULT_DESA,
     DEFAULT_KECAMATAN
 } from '@/types/database'
-import { ArrowLeft, Save } from 'lucide-react'
+import { ArrowLeft, Save, Camera, X } from 'lucide-react'
 import Link from 'next/link'
 
 export default function EditWargaPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = use(params)
     const router = useRouter()
     const supabase = createClient()
+    const fileInputRef = useRef<HTMLInputElement>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [profile, setProfile] = useState<User | null>(null)
     const [formData, setFormData] = useState<Partial<Warga>>({})
+    const [fotoPreview, setFotoPreview] = useState<string | null>(null)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -45,11 +48,40 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
 
             if (wargaData) {
                 setFormData(wargaData)
+                if (wargaData.foto_ktp) {
+                    setFotoPreview(wargaData.foto_ktp)
+                }
             }
             setLoading(false)
         }
         fetchData()
     }, [resolvedParams.id])
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Ukuran file maksimal 2MB')
+                return
+            }
+
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                const base64 = reader.result as string
+                setFotoPreview(base64)
+                setFormData(prev => ({ ...prev, foto_ktp: base64 }))
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
+    const removeFoto = () => {
+        setFotoPreview(null)
+        setFormData(prev => ({ ...prev, foto_ktp: null }))
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+        }
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -75,6 +107,8 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                 kewarganegaraan: formData.kewarganegaraan,
                 no_kk: formData.no_kk,
                 no_wa: formData.no_wa,
+                hubungan_keluarga: formData.hubungan_keluarga,
+                foto_ktp: formData.foto_ktp,
                 updated_at: new Date().toISOString(),
             })
             .eq('id', resolvedParams.id)
@@ -102,7 +136,7 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
     }
 
     return (
-        <div className="space-y-4 sm:space-y-6 pb-20">
+        <div className="space-y-4 sm:space-y-6">
             {/* Header */}
             <div className="flex items-center gap-3 sm:gap-4">
                 <Link
@@ -119,6 +153,45 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8">
+                {/* Foto KTP */}
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Foto KTP</label>
+                    <div className="flex items-start gap-4">
+                        {fotoPreview ? (
+                            <div className="relative">
+                                <img
+                                    src={fotoPreview}
+                                    alt="Foto KTP"
+                                    className="w-32 h-20 sm:w-48 sm:h-28 object-cover rounded-lg border border-gray-200"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={removeFoto}
+                                    className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="w-32 h-20 sm:w-48 sm:h-28 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-emerald-500 hover:text-emerald-500 transition-colors"
+                            >
+                                <Camera size={24} />
+                                <span className="text-xs mt-1">Upload Foto</span>
+                            </button>
+                        )}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="hidden"
+                        />
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     {/* NIK */}
                     <div className="sm:col-span-2 md:col-span-1">
@@ -260,10 +333,9 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Desa</label>
                         <input
                             type="text"
-                            name="desa"
-                            value={formData.desa || DEFAULT_DESA}
-                            onChange={handleChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl bg-gray-50 text-gray-600 text-base"
+                            value={DEFAULT_DESA}
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl bg-gray-100 text-gray-500 text-base"
+                            disabled
                         />
                     </div>
 
@@ -272,30 +344,7 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Kecamatan</label>
                         <input
                             type="text"
-                            name="kecamatan"
-                            value={formData.kecamatan || DEFAULT_KECAMATAN}
-                            onChange={handleChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl bg-gray-50 text-gray-600 text-base"
-                        />
-                    </div>
-
-                    {/* Kabupaten */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Kabupaten</label>
-                        <input
-                            type="text"
-                            value="Cianjur"
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl bg-gray-100 text-gray-500 text-base"
-                            disabled
-                        />
-                    </div>
-
-                    {/* Provinsi */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Provinsi</label>
-                        <input
-                            type="text"
-                            value="Jawa Barat"
+                            value={DEFAULT_KECAMATAN}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl bg-gray-100 text-gray-500 text-base"
                             disabled
                         />
@@ -375,8 +424,23 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                         />
                     </div>
 
-                    {/* No WA */}
+                    {/* Hubungan Keluarga */}
                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Hubungan Keluarga</label>
+                        <select
+                            name="hubungan_keluarga"
+                            value={formData.hubungan_keluarga || 'Kepala Keluarga'}
+                            onChange={handleChange}
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base bg-white"
+                        >
+                            {HUBUNGAN_KELUARGA_OPTIONS.map(hub => (
+                                <option key={hub} value={hub}>{hub}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* No WA */}
+                    <div className="sm:col-span-2 md:col-span-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">No. WhatsApp</label>
                         <input
                             type="tel"

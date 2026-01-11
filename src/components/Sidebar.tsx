@@ -8,7 +8,9 @@ import {
     LogOut,
     Menu,
     X,
-    FileSpreadsheet
+    FileSpreadsheet,
+    Home,
+    UserPlus
 } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -24,7 +26,16 @@ interface SidebarProps {
 const menuItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Data Warga', href: '/dashboard/warga', icon: Users },
+    { name: 'Data Keluarga', href: '/dashboard/keluarga', icon: Home },
     { name: 'Import Data', href: '/dashboard/import', icon: FileSpreadsheet },
+]
+
+// Mobile bottom nav items (simplified)
+const mobileNavItems = [
+    { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Warga', href: '/dashboard/warga', icon: Users },
+    { name: 'Keluarga', href: '/dashboard/keluarga', icon: Home },
+    { name: 'Tambah', href: '/dashboard/warga/tambah', icon: UserPlus },
 ]
 
 export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarProps) {
@@ -41,27 +52,53 @@ export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarP
 
     return (
         <>
-            {/* Mobile menu button */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-emerald-600 text-white rounded-lg shadow-lg"
-            >
-                {isOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            {/* Mobile Top Header */}
+            <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-emerald-600 to-teal-700 px-4 py-3">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                            <Users className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-base font-bold text-white">Warga Kemang</h1>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleLogout}
+                        className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                    >
+                        <LogOut size={20} />
+                    </button>
+                </div>
+            </header>
 
-            {/* Overlay */}
-            {isOpen && (
-                <div
-                    className="lg:hidden fixed inset-0 bg-black/50 z-40"
-                    onClick={() => setIsOpen(false)}
-                />
-            )}
+            {/* Mobile Bottom Navigation */}
+            <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-2 py-2 safe-area-pb">
+                <div className="flex items-center justify-around">
+                    {mobileNavItems.map((item) => {
+                        const isActive = pathname === item.href ||
+                            (item.href !== '/dashboard' && pathname.startsWith(item.href))
+                        return (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${isActive
+                                        ? 'text-emerald-600'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                            >
+                                <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                                <span className={`text-xs ${isActive ? 'font-semibold' : 'font-medium'}`}>
+                                    {item.name}
+                                </span>
+                            </Link>
+                        )
+                    })}
+                </div>
+            </nav>
 
-            {/* Sidebar */}
-            <aside
-                className={`fixed top-0 left-0 z-40 h-screen w-64 bg-gradient-to-b from-emerald-700 to-teal-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'
-                    }`}
-            >
+            {/* Desktop Sidebar */}
+            <aside className="hidden lg:block fixed top-0 left-0 z-40 h-screen w-64 bg-gradient-to-b from-emerald-700 to-teal-800">
                 <div className="flex flex-col h-full">
                     {/* Logo */}
                     <div className="p-6 border-b border-white/10">
@@ -87,12 +124,12 @@ export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarP
                     {/* Navigation */}
                     <nav className="flex-1 p-4 space-y-2">
                         {menuItems.map((item) => {
-                            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                            const isActive = pathname === item.href ||
+                                (item.href !== '/dashboard' && pathname.startsWith(item.href))
                             return (
                                 <Link
                                     key={item.name}
                                     href={item.href}
-                                    onClick={() => setIsOpen(false)}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
                                             ? 'bg-white text-emerald-700 shadow-lg'
                                             : 'text-white/80 hover:bg-white/10 hover:text-white'
