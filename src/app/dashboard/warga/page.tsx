@@ -207,7 +207,7 @@ export default function WargaPage() {
                             placeholder="Cari nama, NIK, atau No. KK..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base"
+                            className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-800 placeholder-gray-400"
                         />
                     </div>
                     {profile?.role === 'admin' && (
@@ -215,7 +215,7 @@ export default function WargaPage() {
                             <select
                                 value={filterRW}
                                 onChange={(e) => setFilterRW(e.target.value)}
-                                className="px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base bg-white"
+                                className="px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base bg-white text-gray-800"
                             >
                                 <option value="">Semua RW</option>
                                 <option value="001">RW 001</option>
@@ -224,7 +224,7 @@ export default function WargaPage() {
                             <select
                                 value={filterRT}
                                 onChange={(e) => setFilterRT(e.target.value)}
-                                className="px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base bg-white"
+                                className="px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base bg-white text-gray-800"
                             >
                                 <option value="">Semua RT</option>
                                 {['001', '002', '003', '004', '005', '006', '007'].map(rt => (
@@ -246,8 +246,8 @@ export default function WargaPage() {
                                 <p className="text-sm text-gray-500 font-mono mt-0.5">{w.nik}</p>
                             </div>
                             <span className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${w.jenis_kelamin === 'L'
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : 'bg-pink-100 text-pink-800'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-pink-100 text-pink-800'
                                 }`}>
                                 {w.jenis_kelamin === 'L' ? 'L' : 'P'}
                             </span>
@@ -323,8 +323,8 @@ export default function WargaPage() {
                                     <td className="px-4 lg:px-6 py-3 lg:py-4 text-sm font-medium text-gray-800">{w.nama}</td>
                                     <td className="px-4 lg:px-6 py-3 lg:py-4">
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${w.jenis_kelamin === 'L'
-                                                ? 'bg-blue-100 text-blue-800'
-                                                : 'bg-pink-100 text-pink-800'
+                                            ? 'bg-blue-100 text-blue-800'
+                                            : 'bg-pink-100 text-pink-800'
                                             }`}>
                                             {w.jenis_kelamin === 'L' ? 'L' : 'P'}
                                         </span>
