@@ -1,8 +1,9 @@
--- Warga Kemang Database Schema
+-- Warga Kemang Database Schema (UPDATED)
 -- Run this in Supabase SQL Editor
 
--- STEP 1: Run this first to create tables
--- ========================================
+-- JIKA SUDAH ADA TABEL SEBELUMNYA, HAPUS DULU:
+-- DROP TABLE IF EXISTS public.warga;
+-- DROP TABLE IF EXISTS public.users;
 
 -- Enable UUID extension
 create extension if not exists "uuid-ossp";
@@ -18,7 +19,7 @@ create table if not exists public.users (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Create warga table
+-- Create warga table (UPDATED - removed alamat_kampung, added defaults)
 create table if not exists public.warga (
   id uuid default uuid_generate_v4() primary key,
   nik varchar(16) not null unique,
@@ -28,11 +29,10 @@ create table if not exists public.warga (
   jenis_kelamin varchar(1) not null check (jenis_kelamin in ('L', 'P')),
   alamat text not null,
   golongan_darah varchar(3) default '-',
-  alamat_kampung varchar(100) not null,
   rt varchar(3) not null,
   rw varchar(3) not null,
-  desa varchar(50) not null,
-  kecamatan varchar(50) not null,
+  desa varchar(50) not null default 'Kemang',
+  kecamatan varchar(50) not null default 'Bojongpicung',
   kabupaten varchar(50) not null default 'Cianjur',
   provinsi varchar(50) not null default 'Jawa Barat',
   agama varchar(20) not null,
@@ -50,13 +50,11 @@ create index if not exists idx_warga_rt_rw on public.warga(rt, rw);
 create index if not exists idx_warga_nik on public.warga(nik);
 create index if not exists idx_warga_no_kk on public.warga(no_kk);
 
--- STEP 2: Enable RLS
--- ==================
+-- Enable RLS
 alter table public.users enable row level security;
 alter table public.warga enable row level security;
 
--- STEP 3: Create policies for users table
--- ========================================
+-- Policies for users table
 create policy "Anyone can read users" on public.users
   for select using (true);
 
@@ -66,10 +64,7 @@ create policy "Users can update own profile" on public.users
 create policy "Enable insert for authenticated users" on public.users
   for insert with check (auth.uid() = id);
 
--- STEP 4: Create policies for warga table
--- ========================================
-
--- Admin policies
+-- Admin policies for warga
 create policy "Admin can select all warga" on public.warga
   for select using (
     exists (select 1 from public.users where id = auth.uid() and role = 'admin')
@@ -90,7 +85,7 @@ create policy "Admin can delete warga" on public.warga
     exists (select 1 from public.users where id = auth.uid() and role = 'admin')
   );
 
--- RT policies (can only access their own RT/RW)
+-- RT policies
 create policy "RT can select own warga" on public.warga
   for select using (
     exists (

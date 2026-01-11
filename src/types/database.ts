@@ -29,7 +29,6 @@ export interface Warga {
   jenis_kelamin: JenisKelamin;
   alamat: string;
   golongan_darah: GolonganDarah | null;
-  alamat_kampung: string;
   rt: string;
   rw: string;
   desa: string;
@@ -54,11 +53,10 @@ export interface WargaInput {
   jenis_kelamin: JenisKelamin;
   alamat: string;
   golongan_darah?: GolonganDarah | null;
-  alamat_kampung: string;
   rt: string;
   rw: string;
-  desa: string;
-  kecamatan: string;
+  desa?: string;
+  kecamatan?: string;
   agama: Agama;
   status_kawin: StatusKawin;
   pekerjaan: string;
@@ -85,3 +83,9 @@ export const AGAMA_OPTIONS: Agama[] = ['Islam', 'Kristen', 'Katolik', 'Hindu', '
 export const STATUS_KAWIN_OPTIONS: StatusKawin[] = ['Belum Kawin', 'Kawin', 'Cerai Hidup', 'Cerai Mati'];
 
 export const GOLONGAN_DARAH_OPTIONS: GolonganDarah[] = ['A', 'B', 'AB', 'O', '-'];
+
+// Default values
+export const DEFAULT_DESA = 'Kemang';
+export const DEFAULT_KECAMATAN = 'Bojongpicung';
+export const DEFAULT_KABUPATEN = 'Cianjur';
+export const DEFAULT_PROVINSI = 'Jawa Barat';

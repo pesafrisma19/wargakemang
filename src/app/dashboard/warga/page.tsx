@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Warga, User } from '@/types/database'
 import Link from 'next/link'
-import { Plus, Search, Edit, Trash2, Download, FileSpreadsheet, FileText } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, FileSpreadsheet, FileText, MoreVertical, X } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -18,6 +18,7 @@ export default function WargaPage() {
     const [filterRW, setFilterRW] = useState('')
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [deleteId, setDeleteId] = useState<string | null>(null)
+    const [showExportMenu, setShowExportMenu] = useState(false)
     const supabase = createClient()
 
     useEffect(() => {
@@ -27,7 +28,6 @@ export default function WargaPage() {
     const fetchData = async () => {
         setLoading(true)
 
-        // Get current user profile
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
             const { data: profileData } = await supabase
@@ -37,7 +37,6 @@ export default function WargaPage() {
                 .single()
             setProfile(profileData)
 
-            // Fetch warga based on role
             let query = supabase.from('warga').select('*').order('created_at', { ascending: false })
 
             if (profileData?.role !== 'admin') {
@@ -81,7 +80,6 @@ export default function WargaPage() {
             'Tanggal Lahir': w.tanggal_lahir,
             'Jenis Kelamin': w.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan',
             'Alamat': w.alamat,
-            'Alamat Kampung': w.alamat_kampung,
             'RT': w.rt,
             'RW': w.rw,
             'Desa': w.desa,
@@ -101,6 +99,7 @@ export default function WargaPage() {
         const wb = XLSX.utils.book_new()
         XLSX.utils.book_append_sheet(wb, ws, 'Data Warga')
         XLSX.writeFile(wb, `data_warga_${new Date().toISOString().split('T')[0]}.xlsx`)
+        setShowExportMenu(false)
     }
 
     const exportToPDF = () => {
@@ -130,6 +129,7 @@ export default function WargaPage() {
         })
 
         doc.save(`data_warga_${new Date().toISOString().split('T')[0]}.pdf`)
+        setShowExportMenu(false)
     }
 
     if (loading) {
@@ -141,53 +141,73 @@ export default function WargaPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 pb-20">
             {/* Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex flex-col gap-3 sm:gap-4">
                 <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-gray-800">Data Warga</h1>
-                    <p className="text-gray-500 mt-1">
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">Data Warga</h1>
+                    <p className="text-gray-500 text-sm sm:text-base mt-1">
                         {profile?.role === 'admin'
                             ? 'Menampilkan semua data warga'
                             : `Data warga RT ${profile?.rt} / RW ${profile?.rw}`}
                     </p>
                 </div>
-                <div className="flex flex-wrap gap-3">
-                    <button
-                        onClick={exportToExcel}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 font-medium rounded-xl hover:bg-green-100 transition-colors"
-                    >
-                        <FileSpreadsheet size={18} />
-                        Export Excel
-                    </button>
-                    <button
-                        onClick={exportToPDF}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 font-medium rounded-xl hover:bg-red-100 transition-colors"
-                    >
-                        <FileText size={18} />
-                        Export PDF
-                    </button>
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                    {/* Export Dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowExportMenu(!showExportMenu)}
+                            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg sm:rounded-xl hover:bg-gray-200 transition-colors text-sm sm:text-base"
+                        >
+                            <FileSpreadsheet size={18} />
+                            <span className="hidden sm:inline">Export</span>
+                        </button>
+                        {showExportMenu && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowExportMenu(false)} />
+                                <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-100 z-50">
+                                    <button
+                                        onClick={exportToExcel}
+                                        className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-t-xl"
+                                    >
+                                        <FileSpreadsheet size={16} className="text-green-600" />
+                                        Export Excel
+                                    </button>
+                                    <button
+                                        onClick={exportToPDF}
+                                        className="w-full flex items-center gap-2 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-b-xl"
+                                    >
+                                        <FileText size={16} className="text-red-600" />
+                                        Export PDF
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
                     <Link
                         href="/dashboard/warga/tambah"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-xl hover:shadow-lg transition-all"
+                        className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-lg sm:rounded-xl hover:shadow-lg transition-all text-sm sm:text-base"
                     >
                         <Plus size={18} />
-                        Tambah Warga
+                        <span>Tambah</span>
                     </Link>
                 </div>
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-sm border border-gray-100">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="md:col-span-2 relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 shadow-sm border border-gray-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="sm:col-span-2 lg:col-span-2 relative">
+                        <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
                             placeholder="Cari nama, NIK, atau No. KK..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                            className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base"
                         />
                     </div>
                     {profile?.role === 'admin' && (
@@ -195,7 +215,7 @@ export default function WargaPage() {
                             <select
                                 value={filterRW}
                                 onChange={(e) => setFilterRW(e.target.value)}
-                                className="px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                className="px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base bg-white"
                             >
                                 <option value="">Semua RW</option>
                                 <option value="001">RW 001</option>
@@ -204,7 +224,7 @@ export default function WargaPage() {
                             <select
                                 value={filterRT}
                                 onChange={(e) => setFilterRT(e.target.value)}
-                                className="px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                className="px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base bg-white"
                             >
                                 <option value="">Semua RT</option>
                                 {['001', '002', '003', '004', '005', '006', '007'].map(rt => (
@@ -216,39 +236,104 @@ export default function WargaPage() {
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            {/* Mobile Card View */}
+            <div className="block sm:hidden space-y-3">
+                {filteredWarga.map((w) => (
+                    <div key={w.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-gray-800 truncate">{w.nama}</h3>
+                                <p className="text-sm text-gray-500 font-mono mt-0.5">{w.nik}</p>
+                            </div>
+                            <span className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${w.jenis_kelamin === 'L'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : 'bg-pink-100 text-pink-800'
+                                }`}>
+                                {w.jenis_kelamin === 'L' ? 'L' : 'P'}
+                            </span>
+                        </div>
+
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                                <span className="text-gray-400">RT/RW:</span>
+                                <span className="ml-1 text-gray-700">{w.rt}/{w.rw}</span>
+                            </div>
+                            <div>
+                                <span className="text-gray-400">No. KK:</span>
+                                <span className="ml-1 text-gray-700 font-mono text-xs">{w.no_kk || '-'}</span>
+                            </div>
+                            {w.no_wa && (
+                                <div className="col-span-2">
+                                    <span className="text-gray-400">WA:</span>
+                                    <span className="ml-1 text-gray-700">{w.no_wa}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-3 pt-3 border-t border-gray-100 flex gap-2">
+                            <Link
+                                href={`/dashboard/warga/${w.id}/edit`}
+                                className="flex-1 flex items-center justify-center gap-1 py-2 text-blue-600 bg-blue-50 rounded-lg text-sm font-medium"
+                            >
+                                <Edit size={16} />
+                                Edit
+                            </Link>
+                            <button
+                                onClick={() => {
+                                    setDeleteId(w.id)
+                                    setShowDeleteModal(true)
+                                }}
+                                className="flex-1 flex items-center justify-center gap-1 py-2 text-red-600 bg-red-50 rounded-lg text-sm font-medium"
+                            >
+                                <Trash2 size={16} />
+                                Hapus
+                            </button>
+                        </div>
+                    </div>
+                ))}
+
+                {filteredWarga.length === 0 && (
+                    <div className="bg-white rounded-xl p-8 text-center text-gray-500">
+                        {searchQuery || filterRT || filterRW
+                            ? 'Tidak ada data yang sesuai'
+                            : 'Belum ada data warga'}
+                    </div>
+                )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">NIK</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Nama</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Jenis Kelamin</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">RT/RW</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">No. KK</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">No. WA</th>
-                                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase">Aksi</th>
+                                <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-gray-500 uppercase">NIK</th>
+                                <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-gray-500 uppercase">Nama</th>
+                                <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-gray-500 uppercase">JK</th>
+                                <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-gray-500 uppercase">RT/RW</th>
+                                <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-gray-500 uppercase">No. KK</th>
+                                <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs font-semibold text-gray-500 uppercase">No. WA</th>
+                                <th className="px-4 lg:px-6 py-3 lg:py-4 text-center text-xs font-semibold text-gray-500 uppercase">Aksi</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {filteredWarga.map((w) => (
                                 <tr key={w.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 text-sm text-gray-600 font-mono">{w.nik}</td>
-                                    <td className="px-6 py-4 text-sm font-medium text-gray-800">{w.nama}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${w.jenis_kelamin === 'L'
+                                    <td className="px-4 lg:px-6 py-3 lg:py-4 text-sm text-gray-600 font-mono">{w.nik}</td>
+                                    <td className="px-4 lg:px-6 py-3 lg:py-4 text-sm font-medium text-gray-800">{w.nama}</td>
+                                    <td className="px-4 lg:px-6 py-3 lg:py-4">
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${w.jenis_kelamin === 'L'
                                                 ? 'bg-blue-100 text-blue-800'
                                                 : 'bg-pink-100 text-pink-800'
                                             }`}>
-                                            {w.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'}
+                                            {w.jenis_kelamin === 'L' ? 'L' : 'P'}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">{w.rt}/{w.rw}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600 font-mono">{w.no_kk || '-'}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">{w.no_wa || '-'}</td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center justify-center gap-2">
+                                    <td className="px-4 lg:px-6 py-3 lg:py-4 text-sm text-gray-600">{w.rt}/{w.rw}</td>
+                                    <td className="px-4 lg:px-6 py-3 lg:py-4 text-sm text-gray-600 font-mono">{w.no_kk || '-'}</td>
+                                    <td className="px-4 lg:px-6 py-3 lg:py-4 text-sm text-gray-600">{w.no_wa || '-'}</td>
+                                    <td className="px-4 lg:px-6 py-3 lg:py-4">
+                                        <div className="flex items-center justify-center gap-1">
                                             <Link
                                                 href={`/dashboard/warga/${w.id}/edit`}
                                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -283,32 +368,38 @@ export default function WargaPage() {
                     </table>
                 </div>
 
-                {/* Pagination info */}
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                <div className="px-4 lg:px-6 py-3 lg:py-4 bg-gray-50 border-t border-gray-100">
                     <p className="text-sm text-gray-500">
                         Menampilkan {filteredWarga.length} dari {warga.length} data warga
                     </p>
                 </div>
             </div>
 
+            {/* Mobile footer stats */}
+            <div className="sm:hidden bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <p className="text-sm text-gray-500 text-center">
+                    Total: <span className="font-semibold text-gray-700">{filteredWarga.length}</span> dari {warga.length} warga
+                </p>
+            </div>
+
             {/* Delete Modal */}
             {showDeleteModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full">
                         <h3 className="text-lg font-semibold text-gray-800 mb-2">Konfirmasi Hapus</h3>
                         <p className="text-gray-600 mb-6">
                             Apakah Anda yakin ingin menghapus data warga ini? Tindakan ini tidak dapat dibatalkan.
                         </p>
-                        <div className="flex gap-3 justify-end">
+                        <div className="flex gap-3">
                             <button
                                 onClick={() => setShowDeleteModal(false)}
-                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                className="flex-1 px-4 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
                             >
                                 Batal
                             </button>
                             <button
                                 onClick={handleDelete}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
                             >
                                 Hapus
                             </button>
