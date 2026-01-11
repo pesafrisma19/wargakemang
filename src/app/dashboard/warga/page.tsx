@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Warga, User } from '@/types/database'
 import Link from 'next/link'
-import { Plus, Search, Edit, Trash2, FileSpreadsheet, FileText, MoreVertical, X } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, FileSpreadsheet, FileText, MoreVertical, X, Eye } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -272,6 +272,13 @@ export default function WargaPage() {
 
                         <div className="mt-3 pt-3 border-t border-gray-100 flex gap-2">
                             <Link
+                                href={`/dashboard/warga/${w.id}`}
+                                className="flex-1 flex items-center justify-center gap-1 py-2 text-emerald-600 bg-emerald-50 rounded-lg text-sm font-medium"
+                            >
+                                <Eye size={16} />
+                                Lihat
+                            </Link>
+                            <Link
                                 href={`/dashboard/warga/${w.id}/edit`}
                                 className="flex-1 flex items-center justify-center gap-1 py-2 text-blue-600 bg-blue-50 rounded-lg text-sm font-medium"
                             >
@@ -334,6 +341,13 @@ export default function WargaPage() {
                                     <td className="px-4 lg:px-6 py-3 lg:py-4 text-sm text-gray-600">{w.no_wa || '-'}</td>
                                     <td className="px-4 lg:px-6 py-3 lg:py-4">
                                         <div className="flex items-center justify-center gap-1">
+                                            <Link
+                                                href={`/dashboard/warga/${w.id}`}
+                                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                title="Lihat Detail"
+                                            >
+                                                <Eye size={18} />
+                                            </Link>
                                             <Link
                                                 href={`/dashboard/warga/${w.id}/edit`}
                                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

@@ -203,7 +203,7 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                             onChange={handleChange}
                             maxLength={16}
                             inputMode="numeric"
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base"
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-800"
                             required
                         />
                     </div>
@@ -216,7 +216,7 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                             name="nama"
                             value={formData.nama || ''}
                             onChange={handleChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base"
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-800"
                             required
                         />
                     </div>
@@ -229,7 +229,7 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                             name="tempat_lahir"
                             value={formData.tempat_lahir || ''}
                             onChange={handleChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base"
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-800"
                             required
                         />
                     </div>
@@ -242,7 +242,7 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                             name="tanggal_lahir"
                             value={formData.tanggal_lahir || ''}
                             onChange={handleChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base"
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-800"
                             required
                         />
                     </div>
@@ -390,7 +390,7 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                             name="pekerjaan"
                             value={formData.pekerjaan || ''}
                             onChange={handleChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base"
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-800"
                             required
                         />
                     </div>
@@ -420,7 +420,7 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                             onChange={handleChange}
                             maxLength={16}
                             inputMode="numeric"
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base"
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-800"
                         />
                     </div>
 
@@ -448,7 +448,7 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                             value={formData.no_wa || ''}
                             onChange={handleChange}
                             inputMode="tel"
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base"
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-800"
                         />
                     </div>
                 </div>
