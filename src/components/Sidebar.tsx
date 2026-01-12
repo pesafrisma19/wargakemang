@@ -34,10 +34,11 @@ const menuItems = [
 
 // Mobile bottom nav items (simplified)
 const mobileNavItems = [
-    { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Warga', href: '/dashboard/warga', icon: Users },
-    { name: 'Keluarga', href: '/dashboard/keluarga', icon: Home },
-    { name: 'Tambah', href: '/dashboard/warga/tambah', icon: UserPlus },
+    { name: 'Home', href: '/dashboard', icon: LayoutDashboard, adminOnly: false },
+    { name: 'Warga', href: '/dashboard/warga', icon: Users, adminOnly: false },
+    { name: 'Keluarga', href: '/dashboard/keluarga', icon: Home, adminOnly: false },
+    { name: 'Tambah', href: '/dashboard/warga/tambah', icon: UserPlus, adminOnly: false },
+    { name: 'Users', href: '/dashboard/users', icon: UserCog, adminOnly: true },
 ]
 
 export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarProps) {
@@ -77,25 +78,27 @@ export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarP
             {/* Mobile Bottom Navigation */}
             <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-2 py-2 safe-area-pb">
                 <div className="flex items-center justify-around">
-                    {mobileNavItems.map((item) => {
-                        const isActive = pathname === item.href ||
-                            (item.href !== '/dashboard' && pathname.startsWith(item.href))
-                        return (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${isActive
-                                    ? 'text-emerald-600'
-                                    : 'text-gray-500 hover:text-gray-700'
-                                    }`}
-                            >
-                                <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-                                <span className={`text-xs ${isActive ? 'font-semibold' : 'font-medium'}`}>
-                                    {item.name}
-                                </span>
-                            </Link>
-                        )
-                    })}
+                    {mobileNavItems
+                        .filter(item => !item.adminOnly || userRole === 'admin')
+                        .map((item) => {
+                            const isActive = pathname === item.href ||
+                                (item.href !== '/dashboard' && pathname.startsWith(item.href))
+                            return (
+                                <Link
+                                    key={item.name}
+                                    href={item.href}
+                                    className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${isActive
+                                        ? 'text-emerald-600'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                >
+                                    <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                                    <span className={`text-xs ${isActive ? 'font-semibold' : 'font-medium'}`}>
+                                        {item.name}
+                                    </span>
+                                </Link>
+                            )
+                        })}
                 </div>
             </nav>
 
