@@ -120,8 +120,8 @@ export default function TambahWargaPage() {
             pekerjaan: formData.pekerjaan.toUpperCase(),
             desa: formData.desa || DEFAULT_DESA,
             kecamatan: formData.kecamatan || DEFAULT_KECAMATAN,
-            kabupaten: 'Cianjur',
-            provinsi: 'Jawa Barat',
+            kabupaten: 'CIANJUR',
+            provinsi: 'JAWA BARAT',
         }])
 
         if (error) {

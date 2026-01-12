@@ -116,7 +116,7 @@ export const HUBUNGAN_KELUARGA_OPTIONS: HubunganKeluarga[] = [
 ];
 
 // Default values
-export const DEFAULT_DESA = 'Kemang';
-export const DEFAULT_KECAMATAN = 'Bojongpicung';
-export const DEFAULT_KABUPATEN = 'Cianjur';
-export const DEFAULT_PROVINSI = 'Jawa Barat';
+export const DEFAULT_DESA = 'KEMANG';
+export const DEFAULT_KECAMATAN = 'BOJONGPICUNG';
+export const DEFAULT_KABUPATEN = 'CIANJUR';
+export const DEFAULT_PROVINSI = 'JAWA BARAT';
