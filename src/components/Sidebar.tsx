@@ -10,7 +10,8 @@ import {
     X,
     FileSpreadsheet,
     Home,
-    UserPlus
+    UserPlus,
+    UserCog
 } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -24,10 +25,11 @@ interface SidebarProps {
 }
 
 const menuItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Data Warga', href: '/dashboard/warga', icon: Users },
-    { name: 'Data Keluarga', href: '/dashboard/keluarga', icon: Home },
-    { name: 'Import Data', href: '/dashboard/import', icon: FileSpreadsheet },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, adminOnly: false },
+    { name: 'Data Warga', href: '/dashboard/warga', icon: Users, adminOnly: false },
+    { name: 'Data Keluarga', href: '/dashboard/keluarga', icon: Home, adminOnly: false },
+    { name: 'Import Data', href: '/dashboard/import', icon: FileSpreadsheet, adminOnly: false },
+    { name: 'Kelola Users', href: '/dashboard/users', icon: UserCog, adminOnly: true },
 ]
 
 // Mobile bottom nav items (simplified)
@@ -83,8 +85,8 @@ export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarP
                                 key={item.name}
                                 href={item.href}
                                 className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${isActive
-                                        ? 'text-emerald-600'
-                                        : 'text-gray-500 hover:text-gray-700'
+                                    ? 'text-emerald-600'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
@@ -123,23 +125,25 @@ export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarP
 
                     {/* Navigation */}
                     <nav className="flex-1 p-4 space-y-2">
-                        {menuItems.map((item) => {
-                            const isActive = pathname === item.href ||
-                                (item.href !== '/dashboard' && pathname.startsWith(item.href))
-                            return (
-                                <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
+                        {menuItems
+                            .filter(item => !item.adminOnly || userRole === 'admin')
+                            .map((item) => {
+                                const isActive = pathname === item.href ||
+                                    (item.href !== '/dashboard' && pathname.startsWith(item.href))
+                                return (
+                                    <Link
+                                        key={item.name}
+                                        href={item.href}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
                                             ? 'bg-white text-emerald-700 shadow-lg'
                                             : 'text-white/80 hover:bg-white/10 hover:text-white'
-                                        }`}
-                                >
-                                    <item.icon size={20} />
-                                    <span className="font-medium">{item.name}</span>
-                                </Link>
-                            )
-                        })}
+                                            }`}
+                                    >
+                                        <item.icon size={20} />
+                                        <span className="font-medium">{item.name}</span>
+                                    </Link>
+                                )
+                            })}
                     </nav>
 
                     {/* Logout */}
