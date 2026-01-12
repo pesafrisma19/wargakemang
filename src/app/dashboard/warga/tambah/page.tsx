@@ -99,6 +99,19 @@ export default function TambahWargaPage() {
         e.preventDefault()
         setLoading(true)
 
+        // Cek apakah NIK sudah terdaftar
+        const { data: existing } = await supabase
+            .from('warga')
+            .select('nik, nama')
+            .eq('nik', formData.nik)
+            .single()
+
+        if (existing) {
+            alert(`NIK ${formData.nik} sudah terdaftar atas nama: ${existing.nama}`)
+            setLoading(false)
+            return
+        }
+
         const { error } = await supabase.from('warga').insert([{
             ...formData,
             desa: formData.desa || DEFAULT_DESA,
