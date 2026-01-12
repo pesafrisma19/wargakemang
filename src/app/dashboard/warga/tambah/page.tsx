@@ -114,6 +114,10 @@ export default function TambahWargaPage() {
 
         const { error } = await supabase.from('warga').insert([{
             ...formData,
+            nama: formData.nama.toUpperCase(),
+            tempat_lahir: formData.tempat_lahir.toUpperCase(),
+            alamat: formData.alamat.toUpperCase(),
+            pekerjaan: formData.pekerjaan.toUpperCase(),
             desa: formData.desa || DEFAULT_DESA,
             kecamatan: formData.kecamatan || DEFAULT_KECAMATAN,
             kabupaten: 'Cianjur',

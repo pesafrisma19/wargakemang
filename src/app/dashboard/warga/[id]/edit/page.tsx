@@ -91,11 +91,11 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
             .from('warga')
             .update({
                 nik: formData.nik,
-                nama: formData.nama,
-                tempat_lahir: formData.tempat_lahir,
+                nama: formData.nama?.toUpperCase(),
+                tempat_lahir: formData.tempat_lahir?.toUpperCase(),
                 tanggal_lahir: formData.tanggal_lahir,
                 jenis_kelamin: formData.jenis_kelamin,
-                alamat: formData.alamat,
+                alamat: formData.alamat?.toUpperCase(),
                 golongan_darah: formData.golongan_darah,
                 rt: formData.rt,
                 rw: formData.rw,
@@ -103,7 +103,7 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                 kecamatan: formData.kecamatan || DEFAULT_KECAMATAN,
                 agama: formData.agama,
                 status_kawin: formData.status_kawin,
-                pekerjaan: formData.pekerjaan,
+                pekerjaan: formData.pekerjaan?.toUpperCase(),
                 kewarganegaraan: formData.kewarganegaraan,
                 no_kk: formData.no_kk,
                 no_wa: formData.no_wa,
