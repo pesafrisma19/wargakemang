@@ -52,16 +52,16 @@ export default function KeluargaPage() {
                 // Convert to Keluarga array and sort members
                 const keluargaArr: Keluarga[] = Object.keys(grouped).map((no_kk) => {
                     const anggotaList = grouped[no_kk]
-                    // Sort: Kepala Keluarga first, then Istri, then others
+                    // Sort: KEPALA KELUARGA first, then ISTRI, then others
                     const sortOrder: Record<string, number> = {
-                        'Kepala Keluarga': 1,
-                        'Istri': 2,
-                        'Anak': 3,
-                        'Orang Tua': 4,
-                        'Mertua': 5,
-                        'Menantu': 6,
-                        'Cucu': 7,
-                        'Famili Lain': 8,
+                        'KEPALA KELUARGA': 1,
+                        'ISTRI': 2,
+                        'ANAK': 3,
+                        'ORANG TUA': 4,
+                        'MERTUA': 5,
+                        'MENANTU': 6,
+                        'CUCU': 7,
+                        'FAMILI LAIN': 8,
                     }
 
                     const sortedAnggota = [...anggotaList].sort((a, b) => {
@@ -70,7 +70,7 @@ export default function KeluargaPage() {
                         return orderA - orderB
                     })
 
-                    const kepala = sortedAnggota.find(w => w.hubungan_keluarga === 'Kepala Keluarga') || null
+                    const kepala = sortedAnggota.find(w => w.hubungan_keluarga === 'KEPALA KELUARGA') || null
 
                     return {
                         no_kk,
@@ -186,9 +186,9 @@ export default function KeluargaPage() {
                                 <div key={anggota.id} className="p-4 sm:px-6 hover:bg-gray-50 transition-colors">
                                     <div className="flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                                            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 ${anggota.hubungan_keluarga === 'Kepala Keluarga'
+                                            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 ${anggota.hubungan_keluarga === 'KEPALA KELUARGA'
                                                 ? 'bg-emerald-500'
-                                                : anggota.hubungan_keluarga === 'Istri'
+                                                : anggota.hubungan_keluarga === 'ISTRI'
                                                     ? 'bg-pink-500'
                                                     : 'bg-blue-500'
                                                 }`}>
@@ -197,11 +197,11 @@ export default function KeluargaPage() {
                                             <div className="min-w-0">
                                                 <p className="font-medium text-gray-800 truncate">{anggota.nama}</p>
                                                 <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
-                                                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${anggota.hubungan_keluarga === 'Kepala Keluarga'
+                                                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${anggota.hubungan_keluarga === 'KEPALA KELUARGA'
                                                         ? 'bg-emerald-100 text-emerald-700'
-                                                        : anggota.hubungan_keluarga === 'Istri'
+                                                        : anggota.hubungan_keluarga === 'ISTRI'
                                                             ? 'bg-pink-100 text-pink-700'
-                                                            : anggota.hubungan_keluarga === 'Anak'
+                                                            : anggota.hubungan_keluarga === 'ANAK'
                                                                 ? 'bg-blue-100 text-blue-700'
                                                                 : 'bg-gray-100 text-gray-700'
                                                         }`}>

@@ -355,7 +355,7 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Agama *</label>
                         <select
                             name="agama"
-                            value={formData.agama || 'Islam'}
+                            value={formData.agama || 'ISLAM'}
                             onChange={handleChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                             required
@@ -371,7 +371,7 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Status Kawin *</label>
                         <select
                             name="status_kawin"
-                            value={formData.status_kawin || 'Belum Kawin'}
+                            value={formData.status_kawin || 'BELUM KAWIN'}
                             onChange={handleChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                             required
@@ -429,7 +429,7 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Hubungan Keluarga</label>
                         <select
                             name="hubungan_keluarga"
-                            value={formData.hubungan_keluarga || 'Kepala Keluarga'}
+                            value={formData.hubungan_keluarga || 'KEPALA KELUARGA'}
                             onChange={handleChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                         >
