@@ -36,13 +36,13 @@ export default function TambahWargaPage() {
         rw: '',
         desa: DEFAULT_DESA,
         kecamatan: DEFAULT_KECAMATAN,
-        agama: 'Islam',
-        status_kawin: 'Belum Kawin',
+        agama: 'ISLAM',
+        status_kawin: 'BELUM KAWIN',
         pekerjaan: '',
         kewarganegaraan: 'WNI',
         no_kk: '',
         no_wa: '',
-        hubungan_keluarga: 'Kepala Keluarga',
+        hubungan_keluarga: 'KEPALA KELUARGA',
         foto_ktp: null,
     })
 

@@ -6,19 +6,19 @@ export type JenisKelamin = 'L' | 'P';
 
 export type GolonganDarah = 'A' | 'B' | 'AB' | 'O' | '-';
 
-export type StatusKawin = 'Belum Kawin' | 'Kawin' | 'Cerai Hidup' | 'Cerai Mati';
+export type StatusKawin = 'BELUM KAWIN' | 'KAWIN' | 'CERAI HIDUP' | 'CERAI MATI';
 
-export type Agama = 'Islam' | 'Kristen' | 'Katolik' | 'Hindu' | 'Buddha' | 'Konghucu';
+export type Agama = 'ISLAM' | 'KRISTEN' | 'KATOLIK' | 'HINDU' | 'BUDDHA' | 'KONGHUCU';
 
 export type HubunganKeluarga =
-  | 'Kepala Keluarga'
-  | 'Istri'
-  | 'Anak'
-  | 'Orang Tua'
-  | 'Mertua'
-  | 'Menantu'
-  | 'Cucu'
-  | 'Famili Lain';
+  | 'KEPALA KELUARGA'
+  | 'ISTRI'
+  | 'ANAK'
+  | 'ORANG TUA'
+  | 'MERTUA'
+  | 'MENANTU'
+  | 'CUCU'
+  | 'FAMILI LAIN';
 
 export interface User {
   id: string;
@@ -98,21 +98,21 @@ export const RW_RT_STRUCTURE = {
   '002': ['001', '002', '003', '004', '005', '006', '007'],
 } as const;
 
-export const AGAMA_OPTIONS: Agama[] = ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'];
+export const AGAMA_OPTIONS: Agama[] = ['ISLAM', 'KRISTEN', 'KATOLIK', 'HINDU', 'BUDDHA', 'KONGHUCU'];
 
-export const STATUS_KAWIN_OPTIONS: StatusKawin[] = ['Belum Kawin', 'Kawin', 'Cerai Hidup', 'Cerai Mati'];
+export const STATUS_KAWIN_OPTIONS: StatusKawin[] = ['BELUM KAWIN', 'KAWIN', 'CERAI HIDUP', 'CERAI MATI'];
 
 export const GOLONGAN_DARAH_OPTIONS: GolonganDarah[] = ['A', 'B', 'AB', 'O', '-'];
 
 export const HUBUNGAN_KELUARGA_OPTIONS: HubunganKeluarga[] = [
-  'Kepala Keluarga',
-  'Istri',
-  'Anak',
-  'Orang Tua',
-  'Mertua',
-  'Menantu',
-  'Cucu',
-  'Famili Lain',
+  'KEPALA KELUARGA',
+  'ISTRI',
+  'ANAK',
+  'ORANG TUA',
+  'MERTUA',
+  'MENANTU',
+  'CUCU',
+  'FAMILI LAIN',
 ];
 
 // Default values
