@@ -17,13 +17,62 @@ import {
 import { ArrowLeft, Save, Camera, X } from 'lucide-react'
 import Link from 'next/link'
 
+// Helper function to compress image
+const compressImage = (file: File): Promise<{ blob: Blob, dataUrl: string }> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.readAsDataURL(file)
+        reader.onload = (event) => {
+            const img = new Image()
+            img.src = event.target?.result as string
+            img.onload = () => {
+                const canvas = document.createElement('canvas')
+                const ctx = canvas.getContext('2d')
+                if (!ctx) {
+                    reject(new Error('Failed to get canvas context'))
+                    return
+                }
+
+                // Calculate new dimensions (max width 1024px to keep it small but readable)
+                const MAX_WIDTH = 1024
+                let width = img.width
+                let height = img.height
+
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width
+                    width = MAX_WIDTH
+                }
+
+                canvas.width = width
+                canvas.height = height
+                ctx.drawImage(img, 0, 0, width, height)
+
+                // Convert to WebP
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        // Create preview URL
+                        const dataUrl = canvas.toDataURL('image/webp', 0.8)
+                        resolve({ blob, dataUrl })
+                    } else {
+                        reject(new Error('Canvas to Blob failed'))
+                    }
+                }, 'image/webp', 0.8) // Quality 0.8
+            }
+            img.onerror = (err) => reject(err)
+        }
+        reader.onerror = (err) => reject(err)
+    })
+}
+
 export default function TambahWargaPage() {
     const router = useRouter()
     const supabase = createClient()
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [loading, setLoading] = useState(false)
+    const [uploading, setUploading] = useState(false)
     const [profile, setProfile] = useState<User | null>(null)
     const [fotoPreview, setFotoPreview] = useState<string | null>(null)
+    const [selectedFile, setSelectedFile] = useState<Blob | null>(null)
     const [formData, setFormData] = useState<WargaInput>({
         nik: '',
         nama: '',
@@ -69,26 +118,27 @@ export default function TambahWargaPage() {
         fetchProfile()
     }, [])
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
-            if (file.size > 2 * 1024 * 1024) {
-                alert('Ukuran file maksimal 2MB')
-                return
+            try {
+                setUploading(true)
+                // Compress and convert to WebP
+                const { blob, dataUrl } = await compressImage(file)
+                setSelectedFile(blob)
+                setFotoPreview(dataUrl)
+                setUploading(false)
+            } catch (error) {
+                console.error('Error compressing image:', error)
+                alert('Gagal memproses gambar. Silakan coba lagi.')
+                setUploading(false)
             }
-
-            const reader = new FileReader()
-            reader.onloadend = () => {
-                const base64 = reader.result as string
-                setFotoPreview(base64)
-                setFormData(prev => ({ ...prev, foto_ktp: base64 }))
-            }
-            reader.readAsDataURL(file)
         }
     }
 
     const removeFoto = () => {
         setFotoPreview(null)
+        setSelectedFile(null)
         setFormData(prev => ({ ...prev, foto_ktp: null }))
         if (fileInputRef.current) {
             fileInputRef.current.value = ''
@@ -99,38 +149,66 @@ export default function TambahWargaPage() {
         e.preventDefault()
         setLoading(true)
 
-        // Cek apakah NIK sudah terdaftar
-        const { data: existing } = await supabase
-            .from('warga')
-            .select('nik, nama')
-            .eq('nik', formData.nik)
-            .single()
+        try {
+            // Check NIK first
+            const { data: existing } = await supabase
+                .from('warga')
+                .select('nik, nama')
+                .eq('nik', formData.nik)
+                .single()
 
-        if (existing) {
-            alert(`NIK ${formData.nik} sudah terdaftar atas nama: ${existing.nama}`)
-            setLoading(false)
-            return
-        }
+            if (existing) {
+                alert(`NIK ${formData.nik} sudah terdaftar atas nama: ${existing.nama}`)
+                setLoading(false)
+                return
+            }
 
-        const { error } = await supabase.from('warga').insert([{
-            ...formData,
-            nama: formData.nama.toUpperCase(),
-            tempat_lahir: formData.tempat_lahir.toUpperCase(),
-            alamat: formData.alamat.toUpperCase(),
-            pekerjaan: formData.pekerjaan.toUpperCase(),
-            desa: formData.desa || DEFAULT_DESA,
-            kecamatan: formData.kecamatan || DEFAULT_KECAMATAN,
-            kabupaten: 'CIANJUR',
-            provinsi: 'JAWA BARAT',
-        }])
+            let fotoUrl = null
 
-        if (error) {
+            // Upload image if exists
+            if (selectedFile) {
+                const fileName = `${formData.nik}-${Date.now()}.webp`
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('foto-ktp')
+                    .upload(fileName, selectedFile, {
+                        contentType: 'image/webp',
+                        upsert: true
+                    })
+
+                if (uploadError) {
+                    throw new Error('Gagal upload foto: ' + uploadError.message)
+                }
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('foto-ktp')
+                    .getPublicUrl(fileName)
+
+                fotoUrl = publicUrl
+            }
+
+            const { error } = await supabase.from('warga').insert([{
+                ...formData,
+                nama: formData.nama.toUpperCase(),
+                tempat_lahir: formData.tempat_lahir.toUpperCase(),
+                alamat: formData.alamat.toUpperCase(),
+                pekerjaan: formData.pekerjaan.toUpperCase(),
+                desa: formData.desa || DEFAULT_DESA,
+                kecamatan: formData.kecamatan || DEFAULT_KECAMATAN,
+                kabupaten: 'CIANJUR',
+                provinsi: 'JAWA BARAT',
+                foto_ktp: fotoUrl // Use the URL here
+            }])
+
+            if (error) {
+                throw error
+            }
+
+            router.push('/dashboard/warga')
+
+        } catch (error: any) {
             alert('Gagal menyimpan data: ' + error.message)
             setLoading(false)
-            return
         }
-
-        router.push('/dashboard/warga')
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -178,11 +256,12 @@ export default function TambahWargaPage() {
                         ) : (
                             <button
                                 type="button"
-                                onClick={() => fileInputRef.current?.click()}
-                                className="w-32 h-20 sm:w-48 sm:h-28 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-emerald-500 hover:text-emerald-500 transition-colors"
+                                onClick={() => !uploading && fileInputRef.current?.click()}
+                                disabled={uploading}
+                                className="w-32 h-20 sm:w-48 sm:h-28 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-emerald-500 hover:text-emerald-500 transition-colors disabled:opacity-50"
                             >
                                 <Camera size={24} />
-                                <span className="text-xs mt-1">Upload Foto</span>
+                                <span className="text-xs mt-1">{uploading ? 'Processing...' : 'Upload Foto'}</span>
                             </button>
                         )}
                         <input
@@ -193,7 +272,7 @@ export default function TambahWargaPage() {
                             className="hidden"
                         />
                         <p className="text-xs text-gray-400 hidden sm:block">
-                            Format: JPG, PNG<br />
+                            Format: JPG, PNG (Auto convert ke WebP)<br />
                             Maks. 2MB
                         </p>
                     </div>
