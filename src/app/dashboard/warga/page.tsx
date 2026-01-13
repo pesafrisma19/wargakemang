@@ -253,7 +253,7 @@ export default function WargaPage() {
 
             {/* Mobile Card View */}
             <div className="block sm:hidden space-y-3">
-                {filteredWarga.map((w) => (
+                {paginatedWarga.map((w) => (
                     <div key={w.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                         <div className="flex items-start justify-between gap-3">
                             <div className="flex-1 min-w-0">
@@ -314,216 +314,171 @@ export default function WargaPage() {
                     </div>
                 ))}
 
-                {filteredWarga.length === 0 && (
+                {paginatedWarga.length === 0 && (
                     <div className="bg-white rounded-xl p-8 text-center text-gray-500">
                         {searchQuery || filterRT || filterRW
                             ? 'Tidak ada data yang sesuai'
                             : 'Belum ada data warga'}
                     </div>
                 )}
-            </div>
 
-            {/* Desktop Table View */}
-            <div className="hidden sm:block bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                {/* Desktop Table - Gunakan paginatedWarga */}
-                <div className="hidden sm:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-gray-50 text-gray-600 font-medium border-b border-gray-200">
-                                <tr>
-                                    <th className="px-4 py-3">No</th>
-                                    <th className="px-4 py-3">NIK</th>
-                                    <th className="px-4 py-3">Nama</th>
-                                    <th className="px-4 py-3">L/P</th>
-                                    <th className="px-4 py-3">Alamat</th>
-                                    <th className="px-4 py-3 text-center">RT/RW</th>
-                                    <th className="px-4 py-3 text-right">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {paginatedWarga.length > 0 ? (
-                                    paginatedWarga.map((w, index) => (
-                                        <tr key={w.id} className="hover:bg-gray-50 transition-colors group">
-                                            <td className="px-4 py-3 text-gray-500">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                            <td className="px-4 py-3 font-mono text-gray-600">{w.nik}</td>
-                                            <td className="px-4 py-3 font-medium text-gray-800">{w.nama}</td>
-                                            <td className="px-4 py-3">
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${w.jenis_kelamin === 'L' ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'
-                                                    }`}>
-                                                    {w.jenis_kelamin}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate" title={w.alamat}>
-                                                {w.alamat}
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
-                                                    {w.rt}/{w.rw}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Link
-                                                        href={`/dashboard/warga/${w.id}`}
-                                                        className="p-1.5 hover:bg-emerald-50 text-emerald-600 rounded-md transition-colors"
-                                                        title="Lihat Detail"
-                                                    >
-                                                        <Eye size={16} />
-                                                    </Link>
-                                                    <Link
-                                                        href={`/dashboard/warga/${w.id}/edit`}
-                                                        className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-md transition-colors"
-                                                        title="Edit"
-                                                    >
-                                                        <Edit size={16} />
-                                                    </Link>
-                                                    <button
-                                                        onClick={() => {
-                                                            setDeleteId(w.id)
-                                                            setShowDeleteModal(true)
-                                                        }}
-                                                        className="p-1.5 hover:bg-red-50 text-red-600 rounded-md transition-colors"
-                                                        title="Hapus"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
-                                            Tidak ada data warga ditemukan
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                    {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-                            <div className="text-sm text-gray-500">
-                                Menampilkan {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredWarga.length)} dari {filteredWarga.length} data
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                    className="px-3 py-1 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Sebelumnya
-                                </button>
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage === totalPages}
-                                    className="px-3 py-1 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Selanjutnya
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Mobile List - Gunakan paginatedWarga */}
-                <div className="space-y-3 sm:hidden">
-                    {paginatedWarga.length > 0 ? (
-                        paginatedWarga.map((w) => (
-                            <div key={w.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between group">
-                                <div>
-                                    <div className="font-semibold text-gray-800">{w.nama}</div>
-                                    <div className="text-xs text-gray-500 font-mono mt-0.5">{w.nik}</div>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${w.jenis_kelamin === 'L' ? 'bg-blue-50 text-blue-700' : 'bg-pink-50 text-pink-700'
-                                            }`}>
-                                            {w.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'}
-                                        </span>
-                                        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                                            RT {w.rt}/{w.rw}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Link
-                                        href={`/dashboard/warga/${w.id}`}
-                                        className="p-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
-                                    >
-                                        <Eye size={18} />
-                                    </Link>
-                                    <Link
-                                        href={`/dashboard/warga/${w.id}/edit`}
-                                        className="p-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                                    >
-                                        <Edit size={18} />
-                                    </Link>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="text-center py-12 text-gray-500 bg-white rounded-xl border border-dashed border-gray-200">
-                            Tidak ada data warga ditemukan
-                        </div>
-                    )}
-
-                    {/* Pagination Controls Mobile */}
-                    {totalPages > 1 && (
-                        <div className="flex justify-center gap-2 pt-4 pb-8">
+                {/* Mobile Pagination */}
+                {totalPages > 1 && (
+                    <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+                        <div className="flex items-center justify-between gap-2">
                             <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="px-4 py-2 text-sm bg-white border rounded-lg shadow-sm disabled:opacity-50"
+                                className="px-3 py-2 text-sm bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-medium disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
                             >
-                                ←
+                                ← Prev
                             </button>
-                            <span className="px-4 py-2 text-sm bg-white border rounded-lg shadow-sm flex items-center">
-                                Hal {currentPage} / {totalPages}
+                            <span className="text-sm text-gray-600 font-medium">
+                                {currentPage} / {totalPages}
                             </span>
                             <button
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="px-4 py-2 text-sm bg-white border rounded-lg shadow-sm disabled:opacity-50"
+                                className="px-3 py-2 text-sm bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-medium disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
                             >
-                                →
+                                Next →
                             </button>
                         </div>
-                    )}
+                        <p className="text-xs text-gray-500 text-center mt-2">
+                            Total: {filteredWarga.length} warga
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-gray-50 text-gray-600 font-medium border-b border-gray-200">
+                            <tr>
+                                <th className="px-4 py-3">No</th>
+                                <th className="px-4 py-3">NIK</th>
+                                <th className="px-4 py-3">Nama</th>
+                                <th className="px-4 py-3">L/P</th>
+                                <th className="px-4 py-3">Alamat</th>
+                                <th className="px-4 py-3 text-center">RT/RW</th>
+                                <th className="px-4 py-3 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {paginatedWarga.length > 0 ? (
+                                paginatedWarga.map((w, index) => (
+                                    <tr key={w.id} className="hover:bg-gray-50 transition-colors group">
+                                        <td className="px-4 py-3 text-gray-500">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                                        <td className="px-4 py-3 font-mono text-gray-600">{w.nik}</td>
+                                        <td className="px-4 py-3 font-medium text-gray-800">{w.nama}</td>
+                                        <td className="px-4 py-3">
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${w.jenis_kelamin === 'L' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'
+                                                }`}>
+                                                {w.jenis_kelamin}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate" title={w.alamat}>
+                                            {w.alamat}
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                {w.rt}/{w.rw}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center justify-end gap-1">
+                                                <Link
+                                                    href={`/dashboard/warga/${w.id}`}
+                                                    className="p-1.5 hover:bg-emerald-50 text-emerald-600 rounded-md transition-colors"
+                                                    title="Lihat Detail"
+                                                >
+                                                    <Eye size={16} />
+                                                </Link>
+                                                <Link
+                                                    href={`/dashboard/warga/${w.id}/edit`}
+                                                    className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-md transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <Edit size={16} />
+                                                </Link>
+                                                <button
+                                                    onClick={() => {
+                                                        setDeleteId(w.id)
+                                                        setShowDeleteModal(true)
+                                                    }}
+                                                    className="p-1.5 hover:bg-red-50 text-red-600 rounded-md transition-colors"
+                                                    title="Hapus"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
+                                        Tidak ada data warga ditemukan
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
 
-                {/* Mobile footer stats */}
-                <div className="sm:hidden bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                    <p className="text-sm text-gray-500 text-center">
-                        Total: <span className="font-semibold text-gray-700">{filteredWarga.length}</span> dari {warga.length} warga
-                    </p>
-                </div>
-
-                {/* Delete Modal */}
-                {showDeleteModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-2">Konfirmasi Hapus</h3>
-                            <p className="text-gray-600 mb-6">
-                                Apakah Anda yakin ingin menghapus data warga ini? Tindakan ini tidak dapat dibatalkan.
-                            </p>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setShowDeleteModal(false)}
-                                    className="flex-1 px-4 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    onClick={handleDelete}
-                                    className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
-                                >
-                                    Hapus
-                                </button>
-                            </div>
+                {/* Desktop Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
+                        <div className="text-sm text-gray-500">
+                            Menampilkan {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredWarga.length)} dari {filteredWarga.length} data
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1.5 text-sm bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-medium hover:bg-emerald-100 disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
+                            >
+                                Sebelumnya
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1.5 text-sm bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg font-medium hover:bg-emerald-100 disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200"
+                            >
+                                Selanjutnya
+                            </button>
                         </div>
                     </div>
                 )}
             </div>
+
+            {/* Delete Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-2">Konfirmasi Hapus</h3>
+                        <p className="text-gray-600 mb-6">
+                            Apakah Anda yakin ingin menghapus data warga ini? Tindakan ini tidak dapat dibatalkan.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="flex-1 px-4 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
+                            >
+                                Hapus
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
