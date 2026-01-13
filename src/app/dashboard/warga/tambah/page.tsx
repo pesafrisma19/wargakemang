@@ -16,6 +16,7 @@ import {
 } from '@/types/database'
 import { ArrowLeft, Save, Camera, X } from 'lucide-react'
 import Link from 'next/link'
+import Toast, { ToastType } from '@/components/ui/Toast'
 
 // Helper function to compress image
 const compressImage = (file: File): Promise<{ blob: Blob, dataUrl: string }> => {
@@ -68,11 +69,12 @@ export default function TambahWargaPage() {
     const router = useRouter()
     const supabase = createClient()
     const fileInputRef = useRef<HTMLInputElement>(null)
-    const [loading, setLoading] = useState(false)
+    const [saving, setSaving] = useState(false)
     const [uploading, setUploading] = useState(false)
     const [profile, setProfile] = useState<User | null>(null)
     const [fotoPreview, setFotoPreview] = useState<string | null>(null)
     const [selectedFile, setSelectedFile] = useState<Blob | null>(null)
+    const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
     const [formData, setFormData] = useState<WargaInput>({
         nik: '',
         nama: '',
@@ -130,7 +132,7 @@ export default function TambahWargaPage() {
                 setUploading(false)
             } catch (error) {
                 console.error('Error compressing image:', error)
-                alert('Gagal memproses gambar. Silakan coba lagi.')
+                setToast({ message: 'Gagal memproses gambar. Silakan coba lagi.', type: 'error' })
                 setUploading(false)
             }
         }
@@ -147,7 +149,7 @@ export default function TambahWargaPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        setLoading(true)
+        setSaving(true)
 
         try {
             // Check NIK first
@@ -158,8 +160,8 @@ export default function TambahWargaPage() {
                 .single()
 
             if (existing) {
-                alert(`NIK ${formData.nik} sudah terdaftar atas nama: ${existing.nama}`)
-                setLoading(false)
+                setToast({ message: `NIK ${formData.nik} sudah terdaftar atas nama: ${existing.nama}`, type: 'error' })
+                setSaving(false)
                 return
             }
 
@@ -203,11 +205,15 @@ export default function TambahWargaPage() {
                 throw error
             }
 
-            router.push('/dashboard/warga')
+            setSaving(false)
+            setToast({ message: 'Data warga berhasil ditambahkan!', type: 'success' })
+            setTimeout(() => {
+                router.push('/dashboard/warga')
+            }, 1000)
 
         } catch (error: any) {
-            alert('Gagal menyimpan data: ' + error.message)
-            setLoading(false)
+            setSaving(false)
+            setToast({ message: 'Gagal menambah data: ' + error.message, type: 'error' })
         }
     }
 
@@ -218,6 +224,14 @@ export default function TambahWargaPage() {
 
     return (
         <div className="space-y-4 sm:space-y-6">
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
+
             {/* Header */}
             <div className="flex items-center gap-3 sm:gap-4">
                 <Link
@@ -557,11 +571,11 @@ export default function TambahWargaPage() {
                     </Link>
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={saving}
                         className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-xl hover:shadow-lg disabled:opacity-50 transition-all order-1 sm:order-2"
                     >
                         <Save size={20} />
-                        {loading ? 'Menyimpan...' : 'Simpan Data'}
+                        {saving ? 'Menyimpan...' : 'Simpan Data'}
                     </button>
                 </div>
             </form>

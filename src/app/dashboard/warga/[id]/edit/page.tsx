@@ -16,7 +16,7 @@ import {
 } from '@/types/database'
 import { ArrowLeft, Save, Camera, X } from 'lucide-react'
 import Link from 'next/link'
-
+import Toast, { ToastType } from '@/components/ui/Toast'
 // Helper function to compress image
 const compressImage = (file: File): Promise<{ blob: Blob, dataUrl: string }> => {
     return new Promise((resolve, reject) => {
@@ -68,7 +68,6 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
     const resolvedParams = use(params)
     const router = useRouter()
     const supabase = createClient()
-    const fileInputRef = useRef<HTMLInputElement>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [uploading, setUploading] = useState(false)
@@ -76,6 +75,11 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
     const [formData, setFormData] = useState<Partial<Warga>>({})
     const [fotoPreview, setFotoPreview] = useState<string | null>(null)
     const [selectedFile, setSelectedFile] = useState<Blob | null>(null)
+    const [warga, setWarga] = useState<Warga | null>(null)
+    const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
+
+    // Refs
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -191,11 +195,15 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                 throw error
             }
 
-            router.push('/dashboard/warga')
+            setSaving(false)
+            setToast({ message: 'Data berhasil diperbarui!', type: 'success' })
+            setTimeout(() => {
+                router.push('/dashboard/warga')
+            }, 1000)
 
         } catch (error: any) {
-            alert('Gagal menyimpan data: ' + error.message)
             setSaving(false)
+            setToast({ message: 'Gagal menyimpan data: ' + error.message, type: 'error' })
         }
     }
 
@@ -214,6 +222,14 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
 
     return (
         <div className="space-y-4 sm:space-y-6">
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
+
             {/* Header */}
             <div className="flex items-center gap-3 sm:gap-4">
                 <Link
