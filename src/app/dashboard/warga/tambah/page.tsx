@@ -75,6 +75,9 @@ export default function TambahWargaPage() {
     const [fotoPreview, setFotoPreview] = useState<string | null>(null)
     const [selectedFile, setSelectedFile] = useState<Blob | null>(null)
     const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
+    const [fotoKkPreview, setFotoKkPreview] = useState<string | null>(null)
+    const [selectedKkFile, setSelectedKkFile] = useState<Blob | null>(null)
+    const fileKkInputRef = useRef<HTMLInputElement>(null)
     const [formData, setFormData] = useState<WargaInput>({
         nik: '',
         nama: '',
@@ -95,6 +98,10 @@ export default function TambahWargaPage() {
         no_wa: '',
         hubungan_keluarga: 'KEPALA KELUARGA',
         foto_ktp: null,
+        foto_kk: null,
+        nama_ayah: '',
+        nama_ibu: '',
+        pendidikan: '',
     })
 
     useEffect(() => {
@@ -138,12 +145,61 @@ export default function TambahWargaPage() {
         }
     }
 
+    const handleKkFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            try {
+                setUploading(true)
+                // Compress and convert to WebP
+                const { blob, dataUrl } = await compressImage(file)
+                setSelectedKkFile(blob)
+                setFotoKkPreview(dataUrl)
+                setUploading(false)
+            } catch (error) {
+                console.error('Error compressing image:', error)
+                setToast({ message: 'Gagal memproses gambar. Silakan coba lagi.', type: 'error' })
+                setUploading(false)
+            }
+        }
+    }
+
     const removeFoto = () => {
         setFotoPreview(null)
         setSelectedFile(null)
         setFormData(prev => ({ ...prev, foto_ktp: null }))
         if (fileInputRef.current) {
             fileInputRef.current.value = ''
+        }
+    }
+
+    const removeFotoKk = () => {
+        setFotoKkPreview(null)
+        setSelectedKkFile(null)
+        setFormData(prev => ({ ...prev, foto_kk: null }))
+        if (fileKkInputRef.current) {
+            fileKkInputRef.current.value = ''
+        }
+    }
+
+    const handleKkBlur = async () => {
+        if (!formData.no_kk) return
+
+        try {
+            const { data: existing } = await supabase
+                .from('warga')
+                .select('foto_kk')
+                .eq('no_kk', formData.no_kk)
+                .not('foto_kk', 'is', null)
+                .limit(1)
+                .single()
+
+            if (existing?.foto_kk) {
+                setFotoKkPreview(existing.foto_kk)
+                setFormData(prev => ({ ...prev, foto_kk: existing.foto_kk }))
+                setToast({ message: 'Foto KK ditemukan dari anggota keluarga lain', type: 'info' })
+            }
+        } catch (error) {
+            // Ignore error if not found
         }
     }
 
@@ -188,6 +244,29 @@ export default function TambahWargaPage() {
                 fotoUrl = publicUrl
             }
 
+            let fotoKkUrl = formData.foto_kk || null
+
+            // Upload KK image if selected
+            if (selectedKkFile) {
+                const fileName = `kk-${formData.nik || 'unknown'}-${Date.now()}.webp`
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('foto-ktp')
+                    .upload(fileName, selectedKkFile, {
+                        contentType: 'image/webp',
+                        upsert: true
+                    })
+
+                if (uploadError) {
+                    throw new Error('Gagal upload foto KK: ' + uploadError.message)
+                }
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('foto-ktp')
+                    .getPublicUrl(fileName)
+
+                fotoKkUrl = publicUrl
+            }
+
             const { error } = await supabase.from('warga').insert([{
                 ...formData,
                 nama: formData.nama.toUpperCase(),
@@ -198,8 +277,25 @@ export default function TambahWargaPage() {
                 kecamatan: formData.kecamatan || DEFAULT_KECAMATAN,
                 kabupaten: 'CIANJUR',
                 provinsi: 'JAWA BARAT',
-                foto_ktp: fotoUrl // Use the URL here
+                foto_ktp: fotoUrl,
+                foto_kk: fotoKkUrl,
+                nama_ayah: formData.nama_ayah,
+                nama_ibu: formData.nama_ibu,
+                pendidikan: formData.pendidikan,
             }])
+
+            if (error) {
+                throw error
+            }
+
+            // Auto-update foto_kk for family members
+            if (formData.no_kk && fotoKkUrl && selectedKkFile) {
+                await supabase
+                    .from('warga')
+                    .update({ foto_kk: fotoKkUrl })
+                    .eq('no_kk', formData.no_kk)
+                    .neq('nik', formData.nik) // Update others
+            }
 
             if (error) {
                 throw error
@@ -524,6 +620,7 @@ export default function TambahWargaPage() {
                             name="no_kk"
                             value={formData.no_kk || ''}
                             onChange={handleChange}
+                            onBlur={handleKkBlur}
                             maxLength={16}
                             inputMode="numeric"
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
@@ -561,6 +658,62 @@ export default function TambahWargaPage() {
                     </div>
                 </div>
 
+                {/* Data Orang Tua & Pendidikan */}
+                <div className="sm:col-span-2 space-y-4 pt-4 border-t border-gray-100 mt-6 md:col-span-2">
+                    <h3 className="font-semibold text-gray-800">Data Tambahan</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                        {/* Nama Ayah */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Nama Ayah</label>
+                            <input
+                                type="text"
+                                name="nama_ayah"
+                                value={formData.nama_ayah}
+                                onChange={handleChange}
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                placeholder="Nama Ayah"
+                            />
+                        </div>
+
+                        {/* Nama Ibu */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Nama Ibu</label>
+                            <input
+                                type="text"
+                                name="nama_ibu"
+                                value={formData.nama_ibu}
+                                onChange={handleChange}
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                placeholder="Nama Ibu"
+                            />
+                        </div>
+
+                        {/* Pendidikan */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Pendidikan Terakhir</label>
+                            <select
+                                name="pendidikan"
+                                value={formData.pendidikan || ''}
+                                onChange={handleChange}
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                            >
+                                <option value="">Pilih Pendidikan</option>
+                                <option value="TIDAK / BELUM SEKOLAH">TIDAK / BELUM SEKOLAH</option>
+                                <option value="BELUM TAMAT SD/SEDERAJAT">BELUM TAMAT SD/SEDERAJAT</option>
+                                <option value="TAMAT SD / SEDERAJAT">TAMAT SD / SEDERAJAT</option>
+                                <option value="SLTP/SEDERAJAT">SLTP/SEDERAJAT</option>
+                                <option value="SLTA / SEDERAJAT">SLTA / SEDERAJAT</option>
+                                <option value="DIPLOMA I / II">DIPLOMA I / II</option>
+                                <option value="AKADEMI/ DIPLOMA III/S. MUDA">AKADEMI/ DIPLOMA III/S. MUDA</option>
+                                <option value="DIPLOMA IV/ STRATA I">DIPLOMA IV/ STRATA I</option>
+                                <option value="STRATA II">STRATA II</option>
+                                <option value="STRATA III">STRATA III</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+
                 {/* Submit Button */}
                 <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-100">
                     <Link
@@ -578,7 +731,7 @@ export default function TambahWargaPage() {
                         {saving ? 'Menyimpan...' : 'Simpan Data'}
                     </button>
                 </div>
-            </form>
-        </div>
+            </form >
+        </div >
     )
 }

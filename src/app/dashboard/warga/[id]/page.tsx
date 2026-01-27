@@ -126,6 +126,10 @@ export default function DetailWargaPage({ params }: { params: Promise<{ id: stri
                                     <span className="text-gray-800 font-medium">{warga.golongan_darah || '-'}</span>
                                 </div>
                                 <div className="flex justify-between">
+                                    <span className="text-gray-500">Pendidikan</span>
+                                    <span className="text-gray-800 font-medium">{warga.pendidikan || '-'}</span>
+                                </div>
+                                <div className="flex justify-between">
                                     <span className="text-gray-500">Kewarganegaraan</span>
                                     <span className="text-gray-800 font-medium">{warga.kewarganegaraan}</span>
                                 </div>
@@ -169,7 +173,7 @@ export default function DetailWargaPage({ params }: { params: Promise<{ id: stri
                             </div>
                         </div>
 
-                        {/* Contact Info */}
+                        {/* Contact & Family Info */}
                         <div className="sm:col-span-2 space-y-4">
                             <h3 className="font-semibold text-gray-800 flex items-center gap-2">
                                 <Phone size={18} className="text-green-500" />
@@ -184,6 +188,13 @@ export default function DetailWargaPage({ params }: { params: Promise<{ id: stri
                                     <p className="text-gray-500 text-xs uppercase tracking-wide">No. Kartu Keluarga</p>
                                     <p className="text-gray-800 font-mono font-medium mt-1">{warga.no_kk || '-'}</p>
                                 </div>
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                    <p className="text-gray-500 text-xs uppercase tracking-wide">Orang Tua</p>
+                                    <div className="mt-1 space-y-1">
+                                        <p className="text-gray-800 text-sm"><span className="text-gray-500 w-12 inline-block">Ayah:</span> <span className="font-medium">{warga.nama_ayah || '-'}</span></p>
+                                        <p className="text-gray-800 text-sm"><span className="text-gray-500 w-12 inline-block">Ibu:</span> <span className="font-medium">{warga.nama_ibu || '-'}</span></p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -191,23 +202,45 @@ export default function DetailWargaPage({ params }: { params: Promise<{ id: stri
 
                 {/* Sidebar - Photo Card */}
                 <div className="space-y-4">
-                    {/* Foto KTP */}
-                    <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
-                        <h3 className="font-semibold text-gray-800 flex items-center gap-2 mb-4">
-                            <Image size={18} className="text-purple-500" />
-                            Foto KTP
-                        </h3>
-                        {warga.foto_ktp ? (
-                            <img
-                                src={warga.foto_ktp}
-                                alt="Foto KTP"
-                                className="w-full rounded-lg border border-gray-200"
-                            />
-                        ) : (
-                            <div className="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
-                                <span className="text-sm">Tidak ada foto</span>
-                            </div>
-                        )}
+                    {/* Foto Dokumen */}
+                    <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-6">
+                        {/* Foto KTP */}
+                        <div>
+                            <h3 className="font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                <Image size={18} className="text-purple-500" />
+                                Foto KTP
+                            </h3>
+                            {warga.foto_ktp ? (
+                                <img
+                                    src={warga.foto_ktp}
+                                    alt="Foto KTP"
+                                    className="w-full rounded-lg border border-gray-200"
+                                />
+                            ) : (
+                                <div className="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
+                                    <span className="text-sm">Tidak ada foto KTP</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Foto KK */}
+                        <div>
+                            <h3 className="font-semibold text-gray-800 flex items-center gap-2 mb-4">
+                                <Users size={18} className="text-blue-500" />
+                                Foto KK
+                            </h3>
+                            {warga.foto_kk ? (
+                                <img
+                                    src={warga.foto_kk}
+                                    alt="Foto KK"
+                                    className="w-full rounded-lg border border-gray-200"
+                                />
+                            ) : (
+                                <div className="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
+                                    <span className="text-sm">Tidak ada foto KK</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Timestamps */}

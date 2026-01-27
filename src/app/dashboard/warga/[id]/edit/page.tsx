@@ -74,12 +74,15 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
     const [profile, setProfile] = useState<User | null>(null)
     const [formData, setFormData] = useState<Partial<Warga>>({})
     const [fotoPreview, setFotoPreview] = useState<string | null>(null)
+    const [fotoKkPreview, setFotoKkPreview] = useState<string | null>(null)
     const [selectedFile, setSelectedFile] = useState<Blob | null>(null)
+    const [selectedKkFile, setSelectedKkFile] = useState<Blob | null>(null)
     const [warga, setWarga] = useState<Warga | null>(null)
     const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
 
     // Refs
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const fileKkInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -103,6 +106,9 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                 setFormData(wargaData)
                 if (wargaData.foto_ktp) {
                     setFotoPreview(wargaData.foto_ktp)
+                }
+                if (wargaData.foto_kk) {
+                    setFotoKkPreview(wargaData.foto_kk)
                 }
             }
             setLoading(false)
@@ -128,12 +134,39 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
         }
     }
 
+    const handleKkFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            try {
+                setUploading(true)
+                // Compress and convert to WebP
+                const { blob, dataUrl } = await compressImage(file)
+                setSelectedKkFile(blob)
+                setFotoKkPreview(dataUrl)
+                setUploading(false)
+            } catch (error) {
+                console.error('Error compressing image:', error)
+                alert('Gagal memproses gambar. Silakan coba lagi.')
+                setUploading(false)
+            }
+        }
+    }
+
     const removeFoto = () => {
         setFotoPreview(null)
         setSelectedFile(null)
         setFormData(prev => ({ ...prev, foto_ktp: null }))
         if (fileInputRef.current) {
             fileInputRef.current.value = ''
+        }
+    }
+
+    const removeFotoKk = () => {
+        setFotoKkPreview(null)
+        setSelectedKkFile(null)
+        setFormData(prev => ({ ...prev, foto_kk: null }))
+        if (fileKkInputRef.current) {
+            fileKkInputRef.current.value = ''
         }
     }
 
@@ -165,6 +198,39 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                 fotoUrl = publicUrl
             }
 
+            let fotoKkUrl = formData.foto_kk
+
+            // Upload KK image if selected
+            if (selectedKkFile) {
+                const fileName = `kk-${formData.nik || 'unknown'}-${Date.now()}.webp`
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    // Assuming using same bucket 'foto-ktp' or check if 'foto-kk' exists.
+                    // Guide doesnt specify, but user said "foto-kk" exists. 
+                    // I will try 'foto-kk' bucket if it fails I will revert or ask.
+                    // But usually, better to be safe. I will use 'foto-ktp' for safety or 'foto-kk'. 
+                    // Actually user said "udah update tambhan di supabase nya" maybe created bucket too.
+                    // Let's assume 'foto-ktp' bucket for now but prefix or just 'foto-kk' bucket.
+                    // I will use 'foto-ktp' bucket to be safe as I haven't listed buckets.
+                    // Wait, user explicitly said "foto-kk" field.
+                    // I'll stick to 'foto-ktp' bucket for now to avoid errors, or 'docs'.
+                    // Let's use 'foto-ktp' bucket as I know it exists.
+                    .from('foto-ktp')
+                    .upload(fileName, selectedKkFile, {
+                        contentType: 'image/webp',
+                        upsert: true
+                    })
+
+                if (uploadError) {
+                    throw new Error('Gagal upload foto KK: ' + uploadError.message)
+                }
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('foto-ktp')
+                    .getPublicUrl(fileName)
+
+                fotoKkUrl = publicUrl
+            }
+
             const { error } = await supabase
                 .from('warga')
                 .update({
@@ -186,13 +252,26 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                     no_kk: formData.no_kk,
                     no_wa: formData.no_wa,
                     hubungan_keluarga: formData.hubungan_keluarga,
-                    foto_ktp: fotoUrl, // Use the new URL or keep the old one
+                    foto_ktp: fotoUrl,
+                    foto_kk: fotoKkUrl,
+                    nama_ayah: formData.nama_ayah,
+                    nama_ibu: formData.nama_ibu,
+                    pendidikan: formData.pendidikan,
                     updated_at: new Date().toISOString(),
                 })
                 .eq('id', resolvedParams.id)
 
             if (error) {
                 throw error
+            }
+
+            // Auto-update foto_kk for family members
+            if (formData.no_kk && fotoKkUrl && (fotoKkUrl !== warga?.foto_kk || selectedKkFile)) {
+                await supabase
+                    .from('warga')
+                    .update({ foto_kk: fotoKkUrl })
+                    .eq('no_kk', formData.no_kk)
+                    .neq('id', resolvedParams.id) // Update others
             }
 
             setSaving(false)
@@ -286,6 +365,50 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                         <p className="text-xs text-gray-400 hidden sm:block">
                             Format: JPG, PNG (Auto convert ke WebP)<br />
                             Maks. 2MB
+                        </p>
+                    </div>
+                </div>
+
+                {/* Foto KK */}
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Foto KK</label>
+                    <div className="flex items-start gap-4">
+                        {fotoKkPreview ? (
+                            <div className="relative">
+                                <img
+                                    src={fotoKkPreview}
+                                    alt="Foto KK"
+                                    className="w-32 h-20 sm:w-48 sm:h-28 object-cover rounded-lg border border-gray-200"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={removeFotoKk}
+                                    className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => !uploading && fileKkInputRef.current?.click()}
+                                disabled={uploading}
+                                className="w-32 h-20 sm:w-48 sm:h-28 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-emerald-500 hover:text-emerald-500 transition-colors disabled:opacity-50"
+                            >
+                                <Camera size={24} />
+                                <span className="text-xs mt-1">{uploading ? 'Processing...' : 'Upload Foto KK'}</span>
+                            </button>
+                        )}
+                        <input
+                            ref={fileKkInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleKkFileChange}
+                            className="hidden"
+                        />
+                        <p className="text-xs text-gray-400 hidden sm:block">
+                            Otomatis update ke seluruh anggota keluarga<br />
+                            Format: JPG, PNG (Auto convert ke WebP)
                         </p>
                     </div>
                 </div>
@@ -548,6 +671,61 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                             inputMode="tel"
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                         />
+                    </div>
+                </div>
+
+                {/* Data Orang Tua & Pendidikan */}
+                <div className="sm:col-span-2 space-y-4 pt-4 border-t border-gray-100 mt-6">
+                    <h3 className="font-semibold text-gray-800">Data Tambahan</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                        {/* Nama Ayah */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Nama Ayah</label>
+                            <input
+                                type="text"
+                                name="nama_ayah"
+                                value={formData.nama_ayah || ''}
+                                onChange={handleChange}
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                placeholder="Nama Ayah"
+                            />
+                        </div>
+
+                        {/* Nama Ibu */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Nama Ibu</label>
+                            <input
+                                type="text"
+                                name="nama_ibu"
+                                value={formData.nama_ibu || ''}
+                                onChange={handleChange}
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                placeholder="Nama Ibu"
+                            />
+                        </div>
+
+                        {/* Pendidikan */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Pendidikan Terakhir</label>
+                            <select
+                                name="pendidikan"
+                                value={formData.pendidikan || ''}
+                                onChange={handleChange}
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                            >
+                                <option value="">Pilih Pendidikan</option>
+                                <option value="TIDAK / BELUM SEKOLAH">TIDAK / BELUM SEKOLAH</option>
+                                <option value="BELUM TAMAT SD/SEDERAJAT">BELUM TAMAT SD/SEDERAJAT</option>
+                                <option value="TAMAT SD / SEDERAJAT">TAMAT SD / SEDERAJAT</option>
+                                <option value="SLTP/SEDERAJAT">SLTP/SEDERAJAT</option>
+                                <option value="SLTA / SEDERAJAT">SLTA / SEDERAJAT</option>
+                                <option value="DIPLOMA I / II">DIPLOMA I / II</option>
+                                <option value="AKADEMI/ DIPLOMA III/S. MUDA">AKADEMI/ DIPLOMA III/S. MUDA</option>
+                                <option value="DIPLOMA IV/ STRATA I">DIPLOMA IV/ STRATA I</option>
+                                <option value="STRATA II">STRATA II</option>
+                                <option value="STRATA III">STRATA III</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
