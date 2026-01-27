@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Warga, User, Keluarga } from '@/types/database'
 import Link from 'next/link'
-import { Search, Users, ChevronRight, Home, Copy } from 'lucide-react'
+import { Search, Users, ChevronRight, Home } from 'lucide-react'
 
 export default function KeluargaPage() {
     const [keluargaList, setKeluargaList] = useState<Keluarga[]>([])
@@ -98,10 +98,10 @@ export default function KeluargaPage() {
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('id-ID', {
-            day: '2-digit',
-            month: '2-digit',
+            day: 'numeric',
+            month: 'long',
             year: 'numeric'
-        }).replace(/\//g, '-')
+        })
     }
 
     const filteredKeluarga = keluargaList.filter((k) => {
@@ -203,99 +203,124 @@ export default function KeluargaPage() {
                             {keluarga.anggota.map((anggota, index) => {
                                 const isExpanded = expandedId === anggota.id
                                 return (
-                                    <div key={anggota.id} className="transition-colors">
-                                        {/* Member Header (Clickable) */}
+                                    <div key={anggota.id} className="transition-all duration-200">
                                         <div
+                                            className={`p-4 sm:px-6 hover:bg-gray-50 transition-colors cursor-pointer ${isExpanded ? 'bg-gray-50/80' : ''}`}
                                             onClick={() => toggleExpand(anggota.id)}
-                                            className={`p-4 sm:px-6 cursor-pointer flex items-center justify-between gap-3 hover:bg-gray-50 ${isExpanded ? 'bg-gray-50' : ''}`}
                                         >
-                                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 text-sm ${anggota.hubungan_keluarga === 'KEPALA KELUARGA'
-                                                    ? 'bg-blue-100 text-blue-600'
-                                                    : 'bg-blue-100 text-blue-600'
-                                                    }`}>
-                                                    {index + 1}
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 ${anggota.hubungan_keluarga === 'KEPALA KELUARGA'
+                                                        ? 'bg-emerald-500'
+                                                        : anggota.hubungan_keluarga === 'ISTRI'
+                                                            ? 'bg-pink-500'
+                                                            : 'bg-blue-500'
+                                                        }`}>
+                                                        {anggota.nama.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-medium text-gray-800 truncate">{anggota.nama}</p>
+                                                        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
+                                                            <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${anggota.hubungan_keluarga === 'KEPALA KELUARGA'
+                                                                ? 'bg-emerald-100 text-emerald-700'
+                                                                : anggota.hubungan_keluarga === 'ISTRI'
+                                                                    ? 'bg-pink-100 text-pink-700'
+                                                                    : anggota.hubungan_keluarga === 'ANAK'
+                                                                        ? 'bg-blue-100 text-blue-700'
+                                                                        : 'bg-gray-100 text-gray-700'
+                                                                }`}>
+                                                                {anggota.hubungan_keluarga}
+                                                            </span>
+                                                            <span className="hidden sm:inline">•</span>
+                                                            <span className="hidden sm:inline">{anggota.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <p className="font-bold text-gray-800 truncate uppercase text-sm sm:text-base">{anggota.nama}</p>
-                                                    <p className="text-xs text-gray-500 uppercase">{anggota.hubungan_keluarga}</p>
+                                                <div className={`p-2 text-gray-400 rounded-lg transition-transform duration-200 ${isExpanded ? 'rotate-90 text-emerald-600' : ''}`}>
+                                                    <ChevronRight size={20} />
                                                 </div>
                                             </div>
-                                            <ChevronRight
-                                                size={20}
-                                                className={`text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-                                            />
+
+                                            {/* Detailed View */}
+                                            {isExpanded && (
+                                                <div className="mt-4 pt-4 border-t border-gray-200/60 animate-in slide-in-from-top-1 duration-200" onClick={(e) => e.stopPropagation()}>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                                        {/* Left Column */}
+                                                        <div className="space-y-4">
+                                                            {/* NIK with Copy */}
+                                                            <div className="bg-white rounded-lg border border-gray-200 p-3 flex items-center justify-between shadow-sm">
+                                                                <div>
+                                                                    <p className="text-xs text-gray-500 uppercase mb-0.5">NIK</p>
+                                                                    <p className="font-mono font-medium text-gray-800">{anggota.nik}</p>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => copyToClipboard(anggota.nik)}
+                                                                    className="p-1.5 hover:bg-gray-50 rounded-md transition-colors text-gray-400 hover:text-emerald-600"
+                                                                    title="Salin NIK"
+                                                                >
+                                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
+                                                                </button>
+                                                            </div>
+
+                                                            <div className="space-y-3">
+                                                                <div className="flex justify-between text-sm">
+                                                                    <span className="text-gray-500">Tempat Lahir</span>
+                                                                    <span className="text-gray-800 font-medium">{anggota.tempat_lahir}</span>
+                                                                </div>
+                                                                <div className="flex justify-between text-sm">
+                                                                    <span className="text-gray-500">Tanggal Lahir</span>
+                                                                    <span className="text-gray-800 font-medium">{formatDate(anggota.tanggal_lahir)}</span>
+                                                                </div>
+                                                                <div className="flex justify-between text-sm">
+                                                                    <span className="text-gray-500">Agama</span>
+                                                                    <span className="text-gray-800 font-medium">{anggota.agama}</span>
+                                                                </div>
+                                                                <div className="flex justify-between text-sm">
+                                                                    <span className="text-gray-500">Pendidikan</span>
+                                                                    <span className="text-gray-800 font-medium">{anggota.pendidikan || '-'}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Right Column */}
+                                                        <div className="space-y-4">
+                                                            <div className="space-y-3">
+                                                                <div className="flex justify-between text-sm">
+                                                                    <span className="text-gray-500">Pekerjaan</span>
+                                                                    <span className="text-gray-800 font-medium">{anggota.pekerjaan}</span>
+                                                                </div>
+                                                                <div className="flex justify-between text-sm">
+                                                                    <span className="text-gray-500">Status Kawin</span>
+                                                                    <span className="text-gray-800 font-medium">{anggota.status_kawin}</span>
+                                                                </div>
+                                                                <div className="flex justify-between text-sm">
+                                                                    <span className="text-gray-500">Kewarganegaraan</span>
+                                                                    <span className="text-gray-800 font-medium">{anggota.kewarganegaraan}</span>
+                                                                </div>
+                                                                <div className="flex justify-between text-sm border-t border-gray-100 pt-3 mt-3">
+                                                                    <span className="text-gray-500">Nama Ayah</span>
+                                                                    <span className="text-gray-800 font-medium">{anggota.nama_ayah || '-'}</span>
+                                                                </div>
+                                                                <div className="flex justify-between text-sm">
+                                                                    <span className="text-gray-500">Nama Ibu</span>
+                                                                    <span className="text-gray-800 font-medium">{anggota.nama_ibu || '-'}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex justify-end pt-2">
+                                                                <Link
+                                                                    href={`/dashboard/warga/${anggota.id}/edit`}
+                                                                    className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
+                                                                >
+                                                                    Edit Data
+                                                                    <ChevronRight size={14} />
+                                                                </Link>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-
-                                        {/* Expanded Details */}
-                                        {isExpanded && (
-                                            <div className="px-4 pb-4 sm:px-6 sm:pb-6 pt-0">
-                                                <div className="bg-gray-50/50 rounded-xl border border-gray-100 p-4 space-y-4">
-                                                    {/* NIK Section */}
-                                                    <div className="bg-gray-100 rounded-lg p-3 flex items-center justify-between">
-                                                        <div>
-                                                            <p className="text-xs text-gray-500 uppercase mb-1">NIK</p>
-                                                            <p className="font-mono font-medium text-gray-800">{anggota.nik}</p>
-                                                        </div>
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                copyToClipboard(anggota.nik)
-                                                            }}
-                                                            className="p-2 hover:bg-white rounded-md transition-colors text-gray-500"
-                                                        >
-                                                            <Copy size={16} className="rotate-0 scale-100 transition-all" />
-                                                        </button>
-                                                    </div>
-
-                                                    <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm">
-                                                        <div>
-                                                            <p className="text-gray-500 text-xs mb-1">Jenis Kelamin</p>
-                                                            <p className="font-medium text-gray-800">{anggota.jenis_kelamin === 'L' ? 'L' : 'P'}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-500 text-xs mb-1">Tempat Lahir</p>
-                                                            <p className="font-medium text-gray-800 uppercase">{anggota.tempat_lahir}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-500 text-xs mb-1">Tanggal Lahir</p>
-                                                            <p className="font-medium text-gray-800">{formatDate(anggota.tanggal_lahir)}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-500 text-xs mb-1">Agama</p>
-                                                            <p className="font-medium text-gray-800 uppercase">{anggota.agama}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-500 text-xs mb-1">Pendidikan</p>
-                                                            <p className="font-medium text-gray-800 uppercase">{anggota.pendidikan || '-'}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-500 text-xs mb-1">Pekerjaan</p>
-                                                            <p className="font-medium text-gray-800 uppercase">{anggota.pekerjaan || '-'}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-500 text-xs mb-1">Status Kawin</p>
-                                                            <p className="font-medium text-gray-800 uppercase">{anggota.status_kawin}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-500 text-xs mb-1">Kewarganegaraan</p>
-                                                            <p className="font-medium text-gray-800 uppercase">{anggota.kewarganegaraan}</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="border-t border-gray-200 pt-4 grid grid-cols-2 gap-4 text-sm">
-                                                        <div>
-                                                            <p className="text-gray-500 text-xs mb-1">Nama Ayah</p>
-                                                            <p className="font-medium text-gray-800 uppercase">{anggota.nama_ayah || '-'}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-500 text-xs mb-1">Nama Ibu</p>
-                                                            <p className="font-medium text-gray-800 uppercase">{anggota.nama_ibu || '-'}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
                                 )
                             })}
