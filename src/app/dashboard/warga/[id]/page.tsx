@@ -26,6 +26,24 @@ export default function DetailWargaPage({ params }: { params: Promise<{ id: stri
         fetchData()
     }, [resolvedParams.id])
 
+    const handleDownload = async (url: string, filename: string) => {
+        try {
+            const response = await fetch(url)
+            const blob = await response.blob()
+            const blobUrl = window.URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = blobUrl
+            link.download = filename
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(blobUrl)
+        } catch (error) {
+            console.error('Download failed:', error)
+            window.open(url, '_blank')
+        }
+    }
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -217,15 +235,13 @@ export default function DetailWargaPage({ params }: { params: Promise<{ id: stri
                                         alt="Foto KTP"
                                         className="w-full rounded-lg border border-gray-200"
                                     />
-                                    <a
-                                        href={warga.foto_ktp}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                    <button
+                                        onClick={() => handleDownload(warga.foto_ktp!, `ktp-${warga.nik}.webp`)}
                                         className="flex items-center justify-center gap-2 w-full mt-3 px-4 py-2.5 bg-gray-50 hover:bg-emerald-50 text-gray-700 hover:text-emerald-600 border border-gray-200 hover:border-emerald-200 rounded-lg transition-all duration-200 text-sm font-medium group"
                                     >
-                                        <Download size={16} className="group-hover:scale-110 transition-transform" />
+                                        <Download size={16} className="text-blue-500 group-hover:scale-110 transition-transform" />
                                         Download Foto KTP
-                                    </a>
+                                    </button>
                                 </>
                             ) : (
                                 <div className="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
@@ -247,15 +263,13 @@ export default function DetailWargaPage({ params }: { params: Promise<{ id: stri
                                         alt="Foto KK"
                                         className="w-full rounded-lg border border-gray-200"
                                     />
-                                    <a
-                                        href={warga.foto_kk}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                    <button
+                                        onClick={() => handleDownload(warga.foto_kk!, `kk-${warga.no_kk || warga.nik}.webp`)}
                                         className="flex items-center justify-center gap-2 w-full mt-3 px-4 py-2.5 bg-gray-50 hover:bg-emerald-50 text-gray-700 hover:text-emerald-600 border border-gray-200 hover:border-emerald-200 rounded-lg transition-all duration-200 text-sm font-medium group"
                                     >
-                                        <Download size={16} className="group-hover:scale-110 transition-transform" />
+                                        <Download size={16} className="text-blue-500 group-hover:scale-110 transition-transform" />
                                         Download Foto KK
-                                    </a>
+                                    </button>
                                 </>
                             ) : (
                                 <div className="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
