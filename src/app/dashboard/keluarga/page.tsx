@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Warga, User, Keluarga } from '@/types/database'
 import Link from 'next/link'
-import { Search, Users, ChevronRight, Home } from 'lucide-react'
+import { Search, Users, ChevronRight, Home, Copy } from 'lucide-react'
 
 export default function KeluargaPage() {
     const [keluargaList, setKeluargaList] = useState<Keluarga[]>([])
     const [profile, setProfile] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
+    const [expandedId, setExpandedId] = useState<string | null>(null)
     const supabase = createClient()
 
     useEffect(() => {
@@ -84,6 +85,23 @@ export default function KeluargaPage() {
         }
 
         setLoading(false)
+    }
+
+    const toggleExpand = (id: string) => {
+        setExpandedId(expandedId === id ? null : id)
+    }
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text)
+        // You might want to show a toast notification here
+    }
+
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }).replace(/\//g, '-')
     }
 
     const filteredKeluarga = keluargaList.filter((k) => {
@@ -182,45 +200,105 @@ export default function KeluargaPage() {
 
                         {/* Members */}
                         <div className="divide-y divide-gray-100">
-                            {keluarga.anggota.map((anggota, index) => (
-                                <div key={anggota.id} className="p-4 sm:px-6 hover:bg-gray-50 transition-colors">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                                            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 ${anggota.hubungan_keluarga === 'KEPALA KELUARGA'
-                                                ? 'bg-emerald-500'
-                                                : anggota.hubungan_keluarga === 'ISTRI'
-                                                    ? 'bg-pink-500'
-                                                    : 'bg-blue-500'
-                                                }`}>
-                                                {anggota.nama.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="font-medium text-gray-800 truncate">{anggota.nama}</p>
-                                                <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
-                                                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${anggota.hubungan_keluarga === 'KEPALA KELUARGA'
-                                                        ? 'bg-emerald-100 text-emerald-700'
-                                                        : anggota.hubungan_keluarga === 'ISTRI'
-                                                            ? 'bg-pink-100 text-pink-700'
-                                                            : anggota.hubungan_keluarga === 'ANAK'
-                                                                ? 'bg-blue-100 text-blue-700'
-                                                                : 'bg-gray-100 text-gray-700'
-                                                        }`}>
-                                                        {anggota.hubungan_keluarga}
-                                                    </span>
-                                                    <span className="hidden sm:inline">•</span>
-                                                    <span className="hidden sm:inline">{anggota.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'}</span>
+                            {keluarga.anggota.map((anggota, index) => {
+                                const isExpanded = expandedId === anggota.id
+                                return (
+                                    <div key={anggota.id} className="transition-colors">
+                                        {/* Member Header (Clickable) */}
+                                        <div
+                                            onClick={() => toggleExpand(anggota.id)}
+                                            className={`p-4 sm:px-6 cursor-pointer flex items-center justify-between gap-3 hover:bg-gray-50 ${isExpanded ? 'bg-gray-50' : ''}`}
+                                        >
+                                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 text-sm ${anggota.hubungan_keluarga === 'KEPALA KELUARGA'
+                                                    ? 'bg-blue-100 text-blue-600'
+                                                    : 'bg-blue-100 text-blue-600'
+                                                    }`}>
+                                                    {index + 1}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="font-bold text-gray-800 truncate uppercase text-sm sm:text-base">{anggota.nama}</p>
+                                                    <p className="text-xs text-gray-500 uppercase">{anggota.hubungan_keluarga}</p>
                                                 </div>
                                             </div>
+                                            <ChevronRight
+                                                size={20}
+                                                className={`text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                                            />
                                         </div>
-                                        <Link
-                                            href={`/dashboard/warga/${anggota.id}/edit`}
-                                            className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex-shrink-0"
-                                        >
-                                            <ChevronRight size={20} />
-                                        </Link>
+
+                                        {/* Expanded Details */}
+                                        {isExpanded && (
+                                            <div className="px-4 pb-4 sm:px-6 sm:pb-6 pt-0">
+                                                <div className="bg-gray-50/50 rounded-xl border border-gray-100 p-4 space-y-4">
+                                                    {/* NIK Section */}
+                                                    <div className="bg-gray-100 rounded-lg p-3 flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-xs text-gray-500 uppercase mb-1">NIK</p>
+                                                            <p className="font-mono font-medium text-gray-800">{anggota.nik}</p>
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                copyToClipboard(anggota.nik)
+                                                            }}
+                                                            className="p-2 hover:bg-white rounded-md transition-colors text-gray-500"
+                                                        >
+                                                            <Copy size={16} className="rotate-0 scale-100 transition-all" />
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm">
+                                                        <div>
+                                                            <p className="text-gray-500 text-xs mb-1">Jenis Kelamin</p>
+                                                            <p className="font-medium text-gray-800">{anggota.jenis_kelamin === 'L' ? 'L' : 'P'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-500 text-xs mb-1">Tempat Lahir</p>
+                                                            <p className="font-medium text-gray-800 uppercase">{anggota.tempat_lahir}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-500 text-xs mb-1">Tanggal Lahir</p>
+                                                            <p className="font-medium text-gray-800">{formatDate(anggota.tanggal_lahir)}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-500 text-xs mb-1">Agama</p>
+                                                            <p className="font-medium text-gray-800 uppercase">{anggota.agama}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-500 text-xs mb-1">Pendidikan</p>
+                                                            <p className="font-medium text-gray-800 uppercase">{anggota.pendidikan || '-'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-500 text-xs mb-1">Pekerjaan</p>
+                                                            <p className="font-medium text-gray-800 uppercase">{anggota.pekerjaan || '-'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-500 text-xs mb-1">Status Kawin</p>
+                                                            <p className="font-medium text-gray-800 uppercase">{anggota.status_kawin}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-500 text-xs mb-1">Kewarganegaraan</p>
+                                                            <p className="font-medium text-gray-800 uppercase">{anggota.kewarganegaraan}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="border-t border-gray-200 pt-4 grid grid-cols-2 gap-4 text-sm">
+                                                        <div>
+                                                            <p className="text-gray-500 text-xs mb-1">Nama Ayah</p>
+                                                            <p className="font-medium text-gray-800 uppercase">{anggota.nama_ayah || '-'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-500 text-xs mb-1">Nama Ibu</p>
+                                                            <p className="font-medium text-gray-800 uppercase">{anggota.nama_ibu || '-'}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            ))}
+                                )
+                            })}
                         </div>
                     </div>
                 ))}
