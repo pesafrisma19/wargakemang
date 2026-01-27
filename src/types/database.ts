@@ -104,6 +104,16 @@ export interface DashboardStats {
 export const RW_RT_STRUCTURE = {
   '001': ['001', '002', '003', '004', '005', '006'],
   '002': ['001', '002', '003', '004', '005', '006', '007'],
+  '003': ['001', '002', '003', '004', '005', '006'],
+  '004': ['001', '002', '003', '004', '005', '006', '007'],
+  '005': ['001', '002', '003', '004'],
+  '006': ['001', '002', '003', '004', '005', '006', '007'],
+} as const;
+
+export const DUSUN_MAPPING = {
+  'DUSUN I': ['001', '002'],
+  'DUSUN II': ['003', '004'],
+  'DUSUN III': ['005', '006'],
 } as const;
 
 export const AGAMA_OPTIONS: Agama[] = ['ISLAM', 'KRISTEN', 'KATOLIK', 'HINDU', 'BUDDHA', 'KONGHUCU'];

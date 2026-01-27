@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Warga, User } from '@/types/database'
+import { Warga, User, RW_RT_STRUCTURE, DUSUN_MAPPING } from '@/types/database'
 import Link from 'next/link'
 import { Plus, Search, Edit, Trash2, FileSpreadsheet, FileText, MoreVertical, X, Eye } from 'lucide-react'
 import * as XLSX from 'xlsx'
@@ -14,6 +14,7 @@ export default function WargaPage() {
     const [profile, setProfile] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
+    const [filterDusun, setFilterDusun] = useState('')
     const [filterRT, setFilterRT] = useState('')
     const [filterRW, setFilterRW] = useState('')
     const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -56,10 +57,17 @@ export default function WargaPage() {
             w.nik.includes(searchQuery) ||
             w.no_kk?.includes(searchQuery)
 
+        let matchesDusun = true
+        if (filterDusun) {
+            const rwsInDusun = DUSUN_MAPPING[filterDusun as keyof typeof DUSUN_MAPPING]
+            // readonly string[] vs string issue, simply cast or check inclusion
+            matchesDusun = (rwsInDusun as readonly string[]).includes(w.rw)
+        }
+
         const matchesRT = !filterRT || w.rt === filterRT
         const matchesRW = !filterRW || w.rw === filterRW
 
-        return matchesSearch && matchesRT && matchesRW
+        return matchesSearch && matchesDusun && matchesRT && matchesRW
     })
 
     // Pagination Logic
@@ -70,7 +78,7 @@ export default function WargaPage() {
     // Reset page when filter changes
     useEffect(() => {
         setCurrentPage(1)
-    }, [searchQuery, filterRT, filterRW])
+    }, [searchQuery, filterDusun, filterRT, filterRW])
 
     const paginatedWarga = filteredWarga.slice(
         (currentPage - 1) * itemsPerPage,
@@ -215,11 +223,11 @@ export default function WargaPage() {
             {/* Filters */}
             <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 shadow-sm border border-gray-100">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                    <div className="sm:col-span-2 lg:col-span-2 relative">
+                    <div className="sm:col-span-1 lg:col-span-1 relative">
                         <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Cari nama, NIK, atau No. KK..."
+                            placeholder="Cari nama, NIK..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-800 placeholder-gray-400"
@@ -228,21 +236,46 @@ export default function WargaPage() {
                     {profile?.role === 'admin' && (
                         <>
                             <select
+                                value={filterDusun}
+                                onChange={(e) => {
+                                    setFilterDusun(e.target.value)
+                                    setFilterRW('') // Reset RW when Dusun changes
+                                    setFilterRT('')
+                                }}
+                                className="px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base bg-white text-gray-800"
+                            >
+                                <option value="">Semua Dusun</option>
+                                {Object.keys(DUSUN_MAPPING).map(dusun => (
+                                    <option key={dusun} value={dusun}>{dusun}</option>
+                                ))}
+                            </select>
+                            <select
                                 value={filterRW}
-                                onChange={(e) => setFilterRW(e.target.value)}
+                                onChange={(e) => {
+                                    setFilterRW(e.target.value)
+                                    setFilterRT('')
+                                }}
                                 className="px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base bg-white text-gray-800"
                             >
                                 <option value="">Semua RW</option>
-                                <option value="001">RW 001</option>
-                                <option value="002">RW 002</option>
+                                {/* Filter RW based on Dusun if selected */}
+                                {filterDusun
+                                    ? DUSUN_MAPPING[filterDusun as keyof typeof DUSUN_MAPPING].map(rw => (
+                                        <option key={rw} value={rw}>RW {rw}</option>
+                                    ))
+                                    : Object.keys(RW_RT_STRUCTURE).map(rw => (
+                                        <option key={rw} value={rw}>RW {rw}</option>
+                                    ))
+                                }
                             </select>
                             <select
                                 value={filterRT}
                                 onChange={(e) => setFilterRT(e.target.value)}
                                 className="px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base bg-white text-gray-800"
+                                disabled={!filterRW}
                             >
                                 <option value="">Semua RT</option>
-                                {['001', '002', '003', '004', '005', '006', '007'].map(rt => (
+                                {filterRW && RW_RT_STRUCTURE[filterRW as keyof typeof RW_RT_STRUCTURE]?.map(rt => (
                                     <option key={rt} value={rt}>RT {rt}</option>
                                 ))}
                             </select>
