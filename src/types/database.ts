@@ -4,7 +4,7 @@ export type UserRole = 'admin' | 'rt';
 
 export type JenisKelamin = 'L' | 'P';
 
-export type GolonganDarah = 'A' | 'B' | 'AB' | 'O' | '-';
+export type GolonganDarah = 'A' | 'B' | 'AB' | 'O' | 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | '-';
 
 export type StatusKawin = 'BELUM KAWIN' | 'KAWIN' | 'CERAI HIDUP' | 'CERAI MATI';
 
@@ -110,7 +110,7 @@ export const AGAMA_OPTIONS: Agama[] = ['ISLAM', 'KRISTEN', 'KATOLIK', 'HINDU', '
 
 export const STATUS_KAWIN_OPTIONS: StatusKawin[] = ['BELUM KAWIN', 'KAWIN', 'CERAI HIDUP', 'CERAI MATI'];
 
-export const GOLONGAN_DARAH_OPTIONS: GolonganDarah[] = ['A', 'B', 'AB', 'O', '-'];
+export const GOLONGAN_DARAH_OPTIONS: GolonganDarah[] = ['A', 'B', 'AB', 'O', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', '-'];
 
 export const HUBUNGAN_KELUARGA_OPTIONS: HubunganKeluarga[] = [
   'KEPALA KELUARGA',
