@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Warga, User, Keluarga } from '@/types/database'
 import Link from 'next/link'
-import { Search, Users, ChevronRight, Home } from 'lucide-react'
+import { Search, Users, ChevronRight, Home, Copy, Check } from 'lucide-react'
 
 export default function KeluargaPage() {
     const [keluargaList, setKeluargaList] = useState<Keluarga[]>([])
@@ -12,11 +12,19 @@ export default function KeluargaPage() {
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState('')
     const [expandedId, setExpandedId] = useState<string | null>(null)
+    const [copiedId, setCopiedId] = useState<string | null>(null)
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 10
     const supabase = createClient()
 
     useEffect(() => {
         fetchData()
     }, [])
+
+    // Reset page when search changes
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [searchQuery])
 
     const fetchData = async () => {
         setLoading(true)
@@ -91,9 +99,13 @@ export default function KeluargaPage() {
         setExpandedId(expandedId === id ? null : id)
     }
 
-    const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text)
-        // You might want to show a toast notification here
+    const copyToClipboard = (text: string, id: string) => {
+        navigator.clipboard.writeText(text).then(() => {
+            setCopiedId(id)
+            setTimeout(() => setCopiedId(null), 2000)
+        }).catch(err => {
+            console.error('Failed to copy: ', err)
+        })
     }
 
     const formatDate = (dateString: string) => {
@@ -113,6 +125,12 @@ export default function KeluargaPage() {
         return matchesSearch
     })
 
+    const totalPages = Math.ceil(filteredKeluarga.length / itemsPerPage)
+    const paginatedKeluarga = filteredKeluarga.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    )
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -122,7 +140,7 @@ export default function KeluargaPage() {
     }
 
     return (
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-4 sm:space-y-6 pb-20">
             {/* Header */}
             <div>
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">Data Keluarga</h1>
@@ -175,7 +193,7 @@ export default function KeluargaPage() {
 
             {/* Keluarga List */}
             <div className="space-y-3 sm:space-y-4">
-                {filteredKeluarga.map((keluarga) => (
+                {paginatedKeluarga.map((keluarga) => (
                     <div
                         key={keluarga.no_kk}
                         className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
@@ -202,6 +220,7 @@ export default function KeluargaPage() {
                         <div className="divide-y divide-gray-100">
                             {keluarga.anggota.map((anggota, index) => {
                                 const isExpanded = expandedId === anggota.id
+                                const isCopied = copiedId === anggota.id
                                 return (
                                     <div key={anggota.id} className="transition-all duration-200">
                                         <div
@@ -254,11 +273,18 @@ export default function KeluargaPage() {
                                                                     <p className="font-mono font-medium text-gray-800">{anggota.nik}</p>
                                                                 </div>
                                                                 <button
-                                                                    onClick={() => copyToClipboard(anggota.nik)}
-                                                                    className="p-1.5 hover:bg-gray-50 rounded-md transition-colors text-gray-400 hover:text-emerald-600"
-                                                                    title="Salin NIK"
+                                                                    onClick={() => copyToClipboard(anggota.nik, anggota.id)}
+                                                                    className={`p-1.5 rounded-md transition-colors ${isCopied
+                                                                        ? 'bg-emerald-50 text-emerald-600'
+                                                                        : 'hover:bg-gray-50 text-gray-400 hover:text-emerald-600'
+                                                                        }`}
+                                                                    title={isCopied ? "Tersalin!" : "Salin NIK"}
                                                                 >
-                                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
+                                                                    {isCopied ? (
+                                                                        <Check size={16} />
+                                                                    ) : (
+                                                                        <Copy size={16} />
+                                                                    )}
                                                                 </button>
                                                             </div>
 
@@ -339,6 +365,31 @@ export default function KeluargaPage() {
                     </div>
                 )}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+                    <div className="text-sm text-gray-500 text-center sm:text-left order-2 sm:order-1">
+                        Menampilkan {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredKeluarga.length)} dari {filteredKeluarga.length} keluarga
+                    </div>
+                    <div className="flex gap-2 order-1 sm:order-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 text-sm bg-white text-emerald-700 border border-emerald-200 rounded-lg font-medium hover:bg-emerald-50 disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200 transition-colors"
+                        >
+                            Sebelumnya
+                        </button>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 text-sm bg-white text-emerald-700 border border-emerald-200 rounded-lg font-medium hover:bg-emerald-50 disabled:opacity-50 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200 transition-colors"
+                        >
+                            Selanjutnya
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
