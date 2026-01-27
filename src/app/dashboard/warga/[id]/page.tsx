@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Warga } from '@/types/database'
-import { ArrowLeft, Edit, User, MapPin, Phone, Calendar, Briefcase, Heart, Users, CreditCard, Image } from 'lucide-react'
+import { ArrowLeft, Edit, User, MapPin, Phone, Calendar, Briefcase, Heart, Users, CreditCard, Image, Download } from 'lucide-react'
 import Link from 'next/link'
 
 export default function DetailWargaPage({ params }: { params: Promise<{ id: string }> }) {
@@ -211,11 +211,22 @@ export default function DetailWargaPage({ params }: { params: Promise<{ id: stri
                                 Foto KTP
                             </h3>
                             {warga.foto_ktp ? (
-                                <img
-                                    src={warga.foto_ktp}
-                                    alt="Foto KTP"
-                                    className="w-full rounded-lg border border-gray-200"
-                                />
+                                <>
+                                    <img
+                                        src={warga.foto_ktp}
+                                        alt="Foto KTP"
+                                        className="w-full rounded-lg border border-gray-200"
+                                    />
+                                    <a
+                                        href={warga.foto_ktp}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center gap-2 w-full mt-3 px-4 py-2.5 bg-gray-50 hover:bg-emerald-50 text-gray-700 hover:text-emerald-600 border border-gray-200 hover:border-emerald-200 rounded-lg transition-all duration-200 text-sm font-medium group"
+                                    >
+                                        <Download size={16} className="group-hover:scale-110 transition-transform" />
+                                        Download Foto KTP
+                                    </a>
+                                </>
                             ) : (
                                 <div className="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
                                     <span className="text-sm">Tidak ada foto KTP</span>
@@ -230,11 +241,22 @@ export default function DetailWargaPage({ params }: { params: Promise<{ id: stri
                                 Foto KK
                             </h3>
                             {warga.foto_kk ? (
-                                <img
-                                    src={warga.foto_kk}
-                                    alt="Foto KK"
-                                    className="w-full rounded-lg border border-gray-200"
-                                />
+                                <>
+                                    <img
+                                        src={warga.foto_kk}
+                                        alt="Foto KK"
+                                        className="w-full rounded-lg border border-gray-200"
+                                    />
+                                    <a
+                                        href={warga.foto_kk}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center gap-2 w-full mt-3 px-4 py-2.5 bg-gray-50 hover:bg-emerald-50 text-gray-700 hover:text-emerald-600 border border-gray-200 hover:border-emerald-200 rounded-lg transition-all duration-200 text-sm font-medium group"
+                                    >
+                                        <Download size={16} className="group-hover:scale-110 transition-transform" />
+                                        Download Foto KK
+                                    </a>
+                                </>
                             ) : (
                                 <div className="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
                                     <span className="text-sm">Tidak ada foto KK</span>
