@@ -388,6 +388,50 @@ export default function TambahWargaPage() {
                     </div>
                 </div>
 
+                {/* Foto KK */}
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Foto KK</label>
+                    <div className="flex items-start gap-4">
+                        {fotoKkPreview ? (
+                            <div className="relative">
+                                <img
+                                    src={fotoKkPreview}
+                                    alt="Foto KK"
+                                    className="w-32 h-20 sm:w-48 sm:h-28 object-cover rounded-lg border border-gray-200"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={removeFotoKk}
+                                    className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => !uploading && fileKkInputRef.current?.click()}
+                                disabled={uploading}
+                                className="w-32 h-20 sm:w-48 sm:h-28 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center text-gray-400 hover:border-emerald-500 hover:text-emerald-500 transition-colors disabled:opacity-50"
+                            >
+                                <Camera size={24} />
+                                <span className="text-xs mt-1">{uploading ? 'Processing...' : 'Upload Foto KK'}</span>
+                            </button>
+                        )}
+                        <input
+                            ref={fileKkInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleKkFileChange}
+                            className="hidden"
+                        />
+                        <p className="text-xs text-gray-400 hidden sm:block">
+                            Otomatis update ke seluruh anggota keluarga<br />
+                            Format: JPG, PNG (Auto convert ke WebP)
+                        </p>
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     {/* NIK */}
                     <div className="sm:col-span-2 md:col-span-1">
