@@ -599,8 +599,8 @@ export default function TambahWargaPage() {
                             <option value="SLTP/SEDERAJAT">SLTP/SEDERAJAT</option>
                             <option value="SLTA/SEDERAJAT">SLTA/SEDERAJAT</option>
                             <option value="DIPLOMA I/II">DIPLOMA I/II</option>
-                            <option value="AKADEMI/ DIPLOMA III/S. MUDA">AKADEMI/ DIPLOMA III/S. MUDA</option>
-                            <option value="DIPLOMA IV/ STRATA I">DIPLOMA IV/ STRATA I</option>
+                            <option value="AKADEMI/DIPLOMA III/S. MUDA">AKADEMI/DIPLOMA III/S. MUDA</option>
+                            <option value="DIPLOMA IV/STRATA I">DIPLOMA IV/STRATA I</option>
                             <option value="STRATA II">STRATA II</option>
                             <option value="STRATA III">STRATA III</option>
                         </select>
