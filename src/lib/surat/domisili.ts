@@ -16,8 +16,10 @@ export interface DomisiliData {
     pekerjaan: string
     agama: string
     alamat: string
-    // Isi surat
-    keperluan: string
+    // Isi surat (semua editable)
+    paragrafPembuka: string
+    paragrafIsi: string
+    paragrafPenutup: string
     // TTD
     penandatangan: Penandatangan
     tanggalSurat: string
@@ -29,6 +31,18 @@ function formatTglLahir(tgl: string): string {
     const mm = String(date.getMonth() + 1).padStart(2, '0')
     const yyyy = date.getFullYear()
     return `${dd}-${mm}-${yyyy}`
+}
+
+export function getDefaultParagrafPembuka(pengaturan: Pengaturan): string {
+    return `Kepala Desa ${capitalize(pengaturan.nama_desa)}, Kecamatan ${capitalize(pengaturan.nama_kecamatan)} Kabupaten ${capitalize(pengaturan.nama_kabupaten)} dengan ini menerangkan bahwa :`
+}
+
+export function getDefaultParagrafIsi(keperluan: string): string {
+    return `Menerangkan bahwa nama tersebut di atas adalah benar-benar warga kami, dan sampai sekarang masih berdomisili seperti yang tertera di atas, dan telah meminta surat keterangan kepada kami untuk melengkapi persyaratan ${keperluan || '...'}.`
+}
+
+export function getDefaultParagrafPenutup(): string {
+    return 'Demikian surat keterangan ini kami buat dengan sebenar-benarnya, agar pihak yang berkepentingan maklum dan mengetahuinya.'
 }
 
 export async function generateSuratDomisili(
@@ -67,11 +81,10 @@ export async function generateSuratDomisili(
     doc.setFontSize(11)
     doc.text(`No : ${data.nomorSurat}`, pageWidth / 2, y, { align: 'center' })
 
-    // Opening paragraph
+    // Opening paragraph (editable)
     y += 12
     doc.setFontSize(11)
-    const openingText = `Kepala Desa ${capitalize(pengaturan.nama_desa)}, Kecamatan ${capitalize(pengaturan.nama_kecamatan)} Kabupaten ${capitalize(pengaturan.nama_kabupaten)} dengan ini menerangkan bahwa :`
-    const openingLines = doc.splitTextToSize(openingText, contentWidth)
+    const openingLines = doc.splitTextToSize(data.paragrafPembuka, contentWidth)
     doc.text(openingLines, margin, y)
     y += openingLines.length * 6 + 4
 
@@ -107,16 +120,14 @@ export async function generateSuratDomisili(
     doc.text(alamatLines, valueX, y)
     y += alamatLines.length * 5.5 + 4
 
-    // Body paragraph
+    // Body paragraph (editable)
     y += 4
-    const bodyText = `Menerangkan bahwa nama tersebut di atas adalah benar-benar warga kami, dan sampai sekarang masih berdomisili seperti yang tertera di atas, dan telah meminta surat keterangan kepada kami untuk melengkapi persyaratan ${data.keperluan}.`
-    const bodyLines = doc.splitTextToSize(bodyText, contentWidth)
+    const bodyLines = doc.splitTextToSize(data.paragrafIsi, contentWidth)
     doc.text(bodyLines, margin, y)
     y += bodyLines.length * 5.5 + 6
 
-    // Closing paragraph
-    const closingText = 'Demikian surat keterangan ini kami buat dengan sebenar-benarnya, agar pihak yang berkepentingan maklum dan mengetahuinya.'
-    const closingLines = doc.splitTextToSize(closingText, contentWidth)
+    // Closing paragraph (editable)
+    const closingLines = doc.splitTextToSize(data.paragrafPenutup, contentWidth)
     doc.text(closingLines, margin, y)
     y += closingLines.length * 5.5 + 16
 

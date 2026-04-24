@@ -4,9 +4,17 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Warga, Pengaturan, Penandatangan } from '@/types/database'
 import WargaSearchSelect from '@/components/WargaSearchSelect'
-import { generateSuratDomisili, DomisiliData } from '@/lib/surat/domisili'
-import { ArrowLeft, FileText, Printer, Save, Check, AlertCircle } from 'lucide-react'
+import {
+    generateSuratDomisili,
+    DomisiliData,
+    getDefaultParagrafPembuka,
+    getDefaultParagrafIsi,
+    getDefaultParagrafPenutup,
+} from '@/lib/surat/domisili'
+import { ArrowLeft, Save, Printer, Check, AlertCircle, UserPlus, Search, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
+
+type InputMode = 'search' | 'manual'
 
 export default function SuratDomisiliPage() {
     const supabase = createClient()
@@ -16,6 +24,7 @@ export default function SuratDomisiliPage() {
     const [generating, setGenerating] = useState(false)
     const [saved, setSaved] = useState(false)
     const [error, setError] = useState('')
+    const [inputMode, setInputMode] = useState<InputMode>('search')
 
     // Editable form fields
     const [nomorSurat, setNomorSurat] = useState('')
@@ -29,11 +38,21 @@ export default function SuratDomisiliPage() {
     const [pekerjaan, setPekerjaan] = useState('')
     const [agama, setAgama] = useState('')
     const [alamat, setAlamat] = useState('')
+
+    // Editable paragraphs
+    const [paragrafPembuka, setParagrafPembuka] = useState('')
+    const [paragrafIsi, setParagrafIsi] = useState('')
+    const [paragrafPenutup, setParagrafPenutup] = useState('')
     const [keperluan, setKeperluan] = useState('')
+
+    // TTD
     const [penandatangan, setPenandatangan] = useState<Penandatangan>('kades')
     const [tanggalSurat, setTanggalSurat] = useState(
         new Date().toISOString().split('T')[0]
     )
+
+    // Track if user manually edited paragraphs
+    const [paragrafIsiEdited, setParagrafIsiEdited] = useState(false)
 
     useEffect(() => {
         fetchPengaturan()
@@ -48,25 +67,34 @@ export default function SuratDomisiliPage() {
             .eq('id', 1)
             .single()
         setPengaturan(data)
+        if (data) {
+            setParagrafPembuka(getDefaultParagrafPembuka(data))
+            setParagrafPenutup(getDefaultParagrafPenutup())
+        }
         setLoading(false)
     }
 
     const generateNomorSurat = async () => {
         const year = new Date().getFullYear()
-        // Count existing domisili letters this year
         const { count } = await supabase
             .from('surat')
             .select('*', { count: 'exact', head: true })
             .eq('jenis_surat', 'domisili')
             .gte('created_at', `${year}-01-01`)
-
         const nextNum = (count || 0) + 1
         setNomorSurat(`474.4 / ${nextNum} /Pemdes/ ${year}`)
     }
 
+    // When keperluan changes, auto-update paragrafIsi (unless user manually edited it)
+    useEffect(() => {
+        if (!paragrafIsiEdited && keperluan) {
+            setParagrafIsi(getDefaultParagrafIsi(keperluan))
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [keperluan])
+
     const handleWargaSelect = (warga: Warga) => {
         setSelectedWarga(warga)
-        // Auto-fill editable fields
         setNama(warga.nama)
         setTempatLahir(warga.tempat_lahir)
         setTanggalLahir(warga.tanggal_lahir)
@@ -76,24 +104,37 @@ export default function SuratDomisiliPage() {
         setKewarganegaraan(warga.kewarganegaraan || 'WNI')
         setPekerjaan(warga.pekerjaan)
         setAgama(warga.agama)
-
-        // Build full address
         const fullAlamat = `${warga.alamat} RT. ${warga.rt} RW. ${warga.rw} Desa ${warga.desa}\nKecamatan ${warga.kecamatan}, Kabupaten ${warga.kabupaten}`
         setAlamat(fullAlamat)
     }
 
     const handleClearWarga = () => {
         setSelectedWarga(null)
-        setNama('')
-        setTempatLahir('')
-        setTanggalLahir('')
-        setNik('')
-        setStatusKawin('')
-        setJenisKelamin('')
-        setKewarganegaraan('WNI')
-        setPekerjaan('')
-        setAgama('')
-        setAlamat('')
+        if (inputMode === 'search') {
+            setNama('')
+            setTempatLahir('')
+            setTanggalLahir('')
+            setNik('')
+            setStatusKawin('')
+            setJenisKelamin('')
+            setKewarganegaraan('WNI')
+            setPekerjaan('')
+            setAgama('')
+            setAlamat('')
+        }
+    }
+
+    const handleSwitchMode = (mode: InputMode) => {
+        setInputMode(mode)
+        setSelectedWarga(null)
+        // Don't clear manual fields when switching
+    }
+
+    const showDataForm = inputMode === 'manual' || selectedWarga || nama
+
+    const resetParagrafIsi = () => {
+        setParagrafIsi(getDefaultParagrafIsi(keperluan))
+        setParagrafIsiEdited(false)
     }
 
     const handleGeneratePDF = async (saveToHistory: boolean) => {
@@ -102,11 +143,11 @@ export default function SuratDomisiliPage() {
             return
         }
         if (!nama || !nik) {
-            setError('Data warga belum lengkap. Pilih warga terlebih dahulu.')
+            setError('Nama dan NIK wajib diisi.')
             return
         }
-        if (!keperluan) {
-            setError('Keperluan surat belum diisi.')
+        if (!paragrafIsi) {
+            setError('Isi surat belum diisi.')
             return
         }
 
@@ -126,14 +167,15 @@ export default function SuratDomisiliPage() {
                 pekerjaan,
                 agama,
                 alamat,
-                keperluan,
+                paragrafPembuka,
+                paragrafIsi,
+                paragrafPenutup,
                 penandatangan,
                 tanggalSurat,
             }
 
             const doc = await generateSuratDomisili(data, pengaturan)
 
-            // Save to history if requested
             if (saveToHistory) {
                 const { data: { user } } = await supabase.auth.getUser()
                 await supabase.from('surat').insert({
@@ -149,7 +191,6 @@ export default function SuratDomisiliPage() {
                 setTimeout(() => setSaved(false), 3000)
             }
 
-            // Download PDF
             doc.save(`Surat_Domisili_${nama.replace(/\s+/g, '_')}.pdf`)
         } catch (err) {
             console.error(err)
@@ -171,10 +212,7 @@ export default function SuratDomisiliPage() {
         <div className="space-y-6 pb-20 max-w-4xl mx-auto">
             {/* Header */}
             <div className="flex items-center gap-4">
-                <Link
-                    href="/dashboard/surat"
-                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
-                >
+                <Link href="/dashboard/surat" className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
                     <ArrowLeft size={22} className="text-gray-600" />
                 </Link>
                 <div>
@@ -192,14 +230,11 @@ export default function SuratDomisiliPage() {
                     <AlertCircle size={18} />
                     <span className="text-sm">
                         Nama Kepala Desa / Sekdes belum diisi.{' '}
-                        <Link href="/dashboard/pengaturan" className="font-semibold underline">
-                            Isi di Pengaturan
-                        </Link>
+                        <Link href="/dashboard/pengaturan" className="font-semibold underline">Isi di Pengaturan</Link>
                     </span>
                 </div>
             )}
 
-            {/* Success / Error */}
             {saved && (
                 <div className="flex items-center gap-2 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700">
                     <Check size={18} />
@@ -225,34 +260,74 @@ export default function SuratDomisiliPage() {
                 />
             </div>
 
-            {/* Step 2: Pilih Warga */}
+            {/* Step 2: Pilih / Input Warga */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6">
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                    Pilih Data Warga
-                </h2>
-                <WargaSearchSelect
-                    onSelect={handleWargaSelect}
-                    selectedWarga={selectedWarga}
-                    onClear={handleClearWarga}
-                />
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Data Warga</h2>
+                    {/* Toggle: Search DB / Input Manual */}
+                    <div className="flex bg-gray-100 rounded-lg p-0.5">
+                        <button
+                            onClick={() => handleSwitchMode('search')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                                inputMode === 'search'
+                                    ? 'bg-white text-emerald-700 shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            <Search size={14} />
+                            Cari Database
+                        </button>
+                        <button
+                            onClick={() => handleSwitchMode('manual')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                                inputMode === 'manual'
+                                    ? 'bg-white text-emerald-700 shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            <UserPlus size={14} />
+                            Input Manual
+                        </button>
+                    </div>
+                </div>
+
+                {inputMode === 'search' && (
+                    <WargaSearchSelect
+                        onSelect={handleWargaSelect}
+                        selectedWarga={selectedWarga}
+                        onClear={handleClearWarga}
+                    />
+                )}
+
+                {inputMode === 'manual' && !selectedWarga && (
+                    <p className="text-sm text-gray-500 mb-3 bg-blue-50 px-3 py-2 rounded-lg">
+                        💡 Mode input manual — isi data warga langsung tanpa perlu ada di database.
+                    </p>
+                )}
             </div>
 
             {/* Step 3: Data Warga (Editable) */}
-            {(selectedWarga || nama) && (
+            {showDataForm && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-emerald-500 to-teal-600">
                         <h2 className="text-white font-semibold">Data Warga</h2>
-                        <p className="text-emerald-100 text-sm">Data otomatis terisi, bisa diedit jika perlu</p>
+                        <p className="text-emerald-100 text-sm">
+                            {inputMode === 'search' ? 'Data otomatis terisi, bisa diedit jika perlu' : 'Isi data warga secara manual'}
+                        </p>
                     </div>
                     <div className="p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="sm:col-span-2">
-                            <label className="block text-sm font-medium text-gray-600 mb-1">Nama</label>
+                            <label className="block text-sm font-medium text-gray-600 mb-1">
+                                Nama <span className="text-red-500">*</span>
+                            </label>
                             <input type="text" value={nama} onChange={(e) => setNama(e.target.value)}
+                                placeholder="Nama lengkap"
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-600 mb-1">Tempat Lahir</label>
                             <input type="text" value={tempatLahir} onChange={(e) => setTempatLahir(e.target.value)}
+                                placeholder="Contoh: Cianjur"
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800" />
                         </div>
                         <div>
@@ -261,18 +336,23 @@ export default function SuratDomisiliPage() {
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1">NIK</label>
+                            <label className="block text-sm font-medium text-gray-600 mb-1">
+                                NIK <span className="text-red-500">*</span>
+                            </label>
                             <input type="text" value={nik} onChange={(e) => setNik(e.target.value)}
+                                placeholder="16 digit NIK"
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 font-mono" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-600 mb-1">Status Perkawinan</label>
                             <input type="text" value={statusKawin} onChange={(e) => setStatusKawin(e.target.value)}
+                                placeholder="Kawin / Belum Kawin"
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-600 mb-1">Jenis Kelamin</label>
                             <input type="text" value={jenisKelamin} onChange={(e) => setJenisKelamin(e.target.value)}
+                                placeholder="Laki-laki / Perempuan"
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800" />
                         </div>
                         <div>
@@ -283,46 +363,103 @@ export default function SuratDomisiliPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-600 mb-1">Pekerjaan</label>
                             <input type="text" value={pekerjaan} onChange={(e) => setPekerjaan(e.target.value)}
+                                placeholder="Contoh: Petani"
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-600 mb-1">Agama</label>
                             <input type="text" value={agama} onChange={(e) => setAgama(e.target.value)}
+                                placeholder="Contoh: Islam"
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800" />
                         </div>
                         <div className="sm:col-span-2">
                             <label className="block text-sm font-medium text-gray-600 mb-1">Alamat Lengkap</label>
                             <textarea value={alamat} onChange={(e) => setAlamat(e.target.value)} rows={3}
+                                placeholder="Kp. ... RT. 00x RW. 00x Desa Kemang&#10;Kecamatan Bojongpicung, Kabupaten Cianjur"
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 resize-none" />
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Step 4: Isi Surat */}
-            {(selectedWarga || nama) && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 space-y-4">
-                    <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Isi Surat</h2>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Keperluan <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={keperluan}
-                            onChange={(e) => setKeperluan(e.target.value)}
-                            placeholder="Contoh: membuat Kartu Keluarga, melamar pekerjaan, dll"
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-800 placeholder-gray-400"
-                        />
-                        <p className="text-xs text-gray-400 mt-1.5">
-                            Akan tertulis: &quot;...melengkapi persyaratan <span className="font-medium text-gray-600">{keperluan || '...'}</span>&quot;
-                        </p>
+            {/* Step 4: Isi Surat (Editable Paragraphs) */}
+            {showDataForm && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-600">
+                        <h2 className="text-white font-semibold">Isi Surat</h2>
+                        <p className="text-blue-100 text-sm">Kata-kata surat bisa diedit langsung di bawah ini</p>
+                    </div>
+                    <div className="p-5 sm:p-6 space-y-4">
+                        {/* Keperluan */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-600 mb-1">
+                                Keperluan <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={keperluan}
+                                onChange={(e) => setKeperluan(e.target.value)}
+                                placeholder="Contoh: membuat Kartu Keluarga, melamar pekerjaan"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base text-gray-800 placeholder-gray-400"
+                            />
+                            <p className="text-xs text-gray-400 mt-1">
+                                Otomatis mengisi paragraf isi di bawah. Atau edit langsung paragrafnya.
+                            </p>
+                        </div>
+
+                        {/* Paragraf Pembuka */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-600 mb-1">Paragraf Pembuka</label>
+                            <textarea
+                                value={paragrafPembuka}
+                                onChange={(e) => setParagrafPembuka(e.target.value)}
+                                rows={3}
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 resize-none text-sm leading-relaxed"
+                            />
+                        </div>
+
+                        {/* Paragraf Isi */}
+                        <div>
+                            <div className="flex items-center justify-between mb-1">
+                                <label className="block text-sm font-medium text-gray-600">Paragraf Isi (Menerangkan)</label>
+                                {paragrafIsiEdited && (
+                                    <button
+                                        onClick={resetParagrafIsi}
+                                        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                                        title="Reset ke template default"
+                                    >
+                                        <RotateCcw size={12} />
+                                        Reset
+                                    </button>
+                                )}
+                            </div>
+                            <textarea
+                                value={paragrafIsi}
+                                onChange={(e) => {
+                                    setParagrafIsi(e.target.value)
+                                    setParagrafIsiEdited(true)
+                                }}
+                                rows={4}
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 resize-none text-sm leading-relaxed"
+                            />
+                        </div>
+
+                        {/* Paragraf Penutup */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-600 mb-1">Paragraf Penutup</label>
+                            <textarea
+                                value={paragrafPenutup}
+                                onChange={(e) => setParagrafPenutup(e.target.value)}
+                                rows={2}
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 resize-none text-sm leading-relaxed"
+                            />
+                        </div>
                     </div>
                 </div>
             )}
 
             {/* Step 5: Penandatangan & Tanggal */}
-            {(selectedWarga || nama) && (
+            {showDataForm && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6">
                     <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Penandatangan & Tanggal</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -355,7 +492,7 @@ export default function SuratDomisiliPage() {
             )}
 
             {/* Action Buttons */}
-            {(selectedWarga || nama) && (
+            {showDataForm && (
                 <div className="flex flex-col sm:flex-row gap-3">
                     <button
                         onClick={() => handleGeneratePDF(true)}
