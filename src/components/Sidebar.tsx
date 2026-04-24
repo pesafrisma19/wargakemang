@@ -11,7 +11,9 @@ import {
     FileSpreadsheet,
     Home,
     UserPlus,
-    UserCog
+    UserCog,
+    FileText,
+    Settings
 } from 'lucide-react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -28,7 +30,9 @@ const menuItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, adminOnly: false },
     { name: 'Data Warga', href: '/dashboard/warga', icon: Users, adminOnly: false },
     { name: 'Data Keluarga', href: '/dashboard/keluarga', icon: Home, adminOnly: false },
+    { name: 'Surat', href: '/dashboard/surat', icon: FileText, adminOnly: true },
     { name: 'Import Data', href: '/dashboard/import', icon: FileSpreadsheet, adminOnly: false },
+    { name: 'Pengaturan', href: '/dashboard/pengaturan', icon: Settings, adminOnly: true },
     { name: 'Kelola Users', href: '/dashboard/users', icon: UserCog, adminOnly: true },
 ]
 
@@ -36,9 +40,9 @@ const menuItems = [
 const mobileNavItems = [
     { name: 'Home', href: '/dashboard', icon: LayoutDashboard, adminOnly: false },
     { name: 'Warga', href: '/dashboard/warga', icon: Users, adminOnly: false },
-    { name: 'Keluarga', href: '/dashboard/keluarga', icon: Home, adminOnly: false },
+    { name: 'Surat', href: '/dashboard/surat', icon: FileText, adminOnly: true },
     { name: 'Tambah', href: '/dashboard/warga/tambah', icon: UserPlus, adminOnly: false },
-    { name: 'Users', href: '/dashboard/users', icon: UserCog, adminOnly: true },
+    { name: 'Lainnya', href: '/dashboard/pengaturan', icon: Settings, adminOnly: true },
 ]
 
 export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarProps) {

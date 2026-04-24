@@ -138,3 +138,45 @@ export const DEFAULT_DESA = 'KEMANG';
 export const DEFAULT_KECAMATAN = 'BOJONGPICUNG';
 export const DEFAULT_KABUPATEN = 'CIANJUR';
 export const DEFAULT_PROVINSI = 'JAWA BARAT';
+
+// =====================================================
+// Surat & Pengaturan Types
+// =====================================================
+
+export type JenisSurat = 'domisili' | 'kematian' | 'kelahiran' | 'sku' | 'sktm' | 'beda-data';
+
+export const JENIS_SURAT_LABELS: Record<JenisSurat, string> = {
+  'domisili': 'Surat Keterangan Domisili',
+  'kematian': 'Surat Keterangan Kematian',
+  'kelahiran': 'Surat Keterangan Kelahiran',
+  'sku': 'Surat Keterangan Usaha',
+  'sktm': 'Surat Keterangan Tidak Mampu',
+  'beda-data': 'Surat Keterangan Beda Data',
+};
+
+export interface Pengaturan {
+  id: number;
+  nama_desa: string;
+  nama_kecamatan: string;
+  nama_kabupaten: string;
+  nama_provinsi: string;
+  alamat_kantor: string;
+  kode_pos: string;
+  nama_kades: string;
+  nama_sekdes: string;
+  updated_at: string;
+}
+
+export interface SuratRecord {
+  id: string;
+  nomor_surat: string;
+  jenis_surat: JenisSurat;
+  warga_id: string | null;
+  warga_nama: string;
+  warga_nik: string;
+  data_surat: Record<string, unknown>;
+  dibuat_oleh: string;
+  created_at: string;
+}
+
+export type Penandatangan = 'kades' | 'sekdes';
