@@ -11,7 +11,7 @@ import {
     getDefaultParagrafIsi,
     getDefaultParagrafPenutup,
 } from '@/lib/surat/domisili'
-import { ArrowLeft, Save, Printer, Check, AlertCircle, UserPlus, Search, RotateCcw } from 'lucide-react'
+import { ArrowLeft, Save, Printer, Check, AlertCircle, UserPlus, Search, RotateCcw, Download, Eye } from 'lucide-react'
 import Link from 'next/link'
 
 type InputMode = 'search' | 'manual'
@@ -137,66 +137,83 @@ export default function SuratDomisiliPage() {
         setParagrafIsiEdited(false)
     }
 
-    const handleGeneratePDF = async (saveToHistory: boolean) => {
+    // Validate form before any action
+    const validateForm = (): boolean => {
         if (!pengaturan) {
             setError('Pengaturan desa belum diisi. Silakan isi di halaman Pengaturan.')
-            return
+            return false
         }
         if (!nama || !nik) {
             setError('Nama dan NIK wajib diisi.')
-            return
+            return false
         }
         if (!paragrafIsi) {
             setError('Isi surat belum diisi.')
-            return
+            return false
         }
-
-        setGenerating(true)
         setError('')
+        return true
+    }
 
+    // Build data object from form
+    const buildData = (): DomisiliData => ({
+        nomorSurat, nama, tempatLahir, tanggalLahir, nik,
+        statusKawin, jenisKelamin, kewarganegaraan, pekerjaan,
+        agama, alamat, paragrafPembuka, paragrafIsi, paragrafPenutup,
+        penandatangan, tanggalSurat,
+    })
+
+    // 1. SIMPAN - save to archive only
+    const handleSimpan = async () => {
+        if (!validateForm()) return
+        setGenerating(true)
         try {
-            const data: DomisiliData = {
-                nomorSurat,
-                nama,
-                tempatLahir,
-                tanggalLahir,
-                nik,
-                statusKawin,
-                jenisKelamin,
-                kewarganegaraan,
-                pekerjaan,
-                agama,
-                alamat,
-                paragrafPembuka,
-                paragrafIsi,
-                paragrafPenutup,
-                penandatangan,
-                tanggalSurat,
-            }
+            const { data: { user } } = await supabase.auth.getUser()
+            await supabase.from('surat').insert({
+                nomor_surat: nomorSurat,
+                jenis_surat: 'domisili',
+                warga_id: selectedWarga?.id || null,
+                warga_nama: nama,
+                warga_nik: nik,
+                data_surat: buildData(),
+                dibuat_oleh: user?.id,
+            })
+            setSaved(true)
+            setTimeout(() => setSaved(false), 3000)
+        } catch (err) {
+            console.error(err)
+            setError('Gagal menyimpan ke arsip.')
+        }
+        setGenerating(false)
+    }
 
-            const doc = await generateSuratDomisili(data, pengaturan)
+    // 2. PRINT - preview & print (opens in new tab)
+    const handlePrint = async () => {
+        if (!validateForm() || !pengaturan) return
+        setGenerating(true)
+        try {
+            const doc = await generateSuratDomisili(buildData(), pengaturan)
+            // Open PDF in new tab for preview/print
+            const blobUrl = doc.output('bloburl')
+            window.open(blobUrl as unknown as string, '_blank')
+        } catch (err) {
+            console.error(err)
+            setError('Gagal membuat preview PDF.')
+        }
+        setGenerating(false)
+    }
 
-            if (saveToHistory) {
-                const { data: { user } } = await supabase.auth.getUser()
-                await supabase.from('surat').insert({
-                    nomor_surat: nomorSurat,
-                    jenis_surat: 'domisili',
-                    warga_id: selectedWarga?.id || null,
-                    warga_nama: nama,
-                    warga_nik: nik,
-                    data_surat: data,
-                    dibuat_oleh: user?.id,
-                })
-                setSaved(true)
-                setTimeout(() => setSaved(false), 3000)
-            }
-
+    // 3. DOWNLOAD - save as PDF file
+    const handleDownload = async () => {
+        if (!validateForm() || !pengaturan) return
+        setGenerating(true)
+        try {
+            const doc = await generateSuratDomisili(buildData(), pengaturan)
             doc.save(`Surat_Domisili_${nama.replace(/\s+/g, '_')}.pdf`)
         } catch (err) {
             console.error(err)
-            setError('Gagal membuat PDF. Silakan coba lagi.')
+            setError('Gagal mendownload PDF.')
         }
-
         setGenerating(false)
     }
 
@@ -493,26 +510,37 @@ export default function SuratDomisiliPage() {
 
             {/* Action Buttons */}
             {showDataForm && (
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* Simpan ke Arsip */}
                     <button
-                        onClick={() => handleGeneratePDF(true)}
+                        onClick={handleSimpan}
                         disabled={generating}
-                        className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50"
+                        className="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50"
                     >
                         {generating ? (
                             <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
                         ) : (
                             <Save size={20} />
                         )}
-                        Simpan & Cetak PDF
+                        Simpan Arsip
                     </button>
+                    {/* Preview & Print */}
                     <button
-                        onClick={() => handleGeneratePDF(false)}
+                        onClick={handlePrint}
                         disabled={generating}
-                        className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white border-2 border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-all disabled:opacity-50"
+                        className="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50"
                     >
-                        <Printer size={20} />
-                        Cetak PDF Saja
+                        <Eye size={20} />
+                        Preview & Print
+                    </button>
+                    {/* Download PDF */}
+                    <button
+                        onClick={handleDownload}
+                        disabled={generating}
+                        className="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-white border-2 border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-all disabled:opacity-50"
+                    >
+                        <Download size={20} />
+                        Download PDF
                     </button>
                 </div>
             )}
