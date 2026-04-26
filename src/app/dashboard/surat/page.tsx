@@ -27,12 +27,12 @@ const SURAT_TYPES = [
     },
     {
         jenis: 'kelahiran' as const,
-        label: 'Surat Keterangan Kelahiran',
-        desc: 'Menerangkan kelahiran bayi',
+        label: 'Surat Kelahiran',
+        desc: 'Surat kelahiran • F4 landscape • hijau',
         icon: '👶',
         color: 'from-pink-500 to-rose-500',
         bgLight: 'bg-pink-50',
-        available: false,
+        available: true,
     },
     {
         jenis: 'sku' as const,
