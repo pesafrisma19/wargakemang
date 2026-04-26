@@ -110,27 +110,22 @@ export default function SuratKelahiranPage() {
         setNomorSurat(`474.1/ ${(count || 0) + 1} /Pemdes/${year}`)
     }
 
-    // Handlers for selecting warga from DB
-    const handleAnakSelect = (w: Warga) => {
-        setSelectedAnak(w)
-        setNamaAnak(w.nama)
-        setTanggalLahir(w.tanggal_lahir)
-        setTempatLahir(w.tempat_lahir)
-        setJenisKelaminAnak(w.jenis_kelamin === 'L' ? 'Laki-Laki' : 'Perempuan')
-        setHariLahir(getDayName(w.tanggal_lahir))
-        // Auto-fill parent names if available
-        if (w.nama_ibu) { setNamaIbu(w.nama_ibu) }
-        if (w.nama_ayah) { setNamaAyah(w.nama_ayah); setNamaPelapor(w.nama_ayah) }
+    // Number to Indonesian text for "anak ke" field
+    const numberToText = (n: number): string => {
+        const words = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh',
+            'Sebelas', 'Dua Belas', 'Tiga Belas', 'Empat Belas', 'Lima Belas']
+        return words[n] || String(n)
     }
 
-    const handleIbuSelect = (w: Warga) => {
+    // Helper to fill parent data from warga record
+    const fillIbuData = (w: Warga) => {
         setSelectedIbu(w)
         setNamaIbu(w.nama)
         setUmurIbu(String(calculateAge(w.tanggal_lahir)))
         setAgamaIbu(w.agama)
     }
 
-    const handleAyahSelect = (w: Warga) => {
+    const fillAyahData = (w: Warga) => {
         setSelectedAyah(w)
         setNamaAyah(w.nama)
         setUmurAyah(String(calculateAge(w.tanggal_lahir)))
@@ -140,6 +135,59 @@ export default function SuratKelahiranPage() {
         setAlamatAyah(`${w.alamat} RT. ${w.rt} RW. ${w.rw}\nDesa ${w.desa} Kec. ${w.kecamatan} Kab. ${w.kabupaten}`)
         setNamaPelapor(w.nama)
     }
+
+    // Handlers for selecting warga from DB
+    const handleAnakSelect = async (w: Warga) => {
+        setSelectedAnak(w)
+        setNamaAnak(w.nama)
+        setTanggalLahir(w.tanggal_lahir)
+        setTempatLahir(w.tempat_lahir)
+        setJenisKelaminAnak(w.jenis_kelamin === 'L' ? 'Laki-Laki' : 'Perempuan')
+        setHariLahir(getDayName(w.tanggal_lahir))
+
+        // Auto-fill parent names from child record
+        if (w.nama_ibu) setNamaIbu(w.nama_ibu)
+        if (w.nama_ayah) { setNamaAyah(w.nama_ayah); setNamaPelapor(w.nama_ayah) }
+
+        // Try to find parents in DB by same no_kk for full data
+        if (w.no_kk) {
+            const { data: keluarga } = await supabase
+                .from('warga')
+                .select('*')
+                .eq('no_kk', w.no_kk)
+
+            if (keluarga) {
+                // Find ibu (by name match or hubungan_keluarga ISTRI)
+                const ibu = keluarga.find(k =>
+                    (w.nama_ibu && k.nama.toUpperCase() === w.nama_ibu.toUpperCase()) ||
+                    k.hubungan_keluarga === 'ISTRI'
+                )
+                if (ibu) fillIbuData(ibu)
+
+                // Find ayah (by name match or hubungan_keluarga KEPALA KELUARGA)
+                const ayah = keluarga.find(k =>
+                    (w.nama_ayah && k.nama.toUpperCase() === w.nama_ayah.toUpperCase()) ||
+                    k.hubungan_keluarga === 'KEPALA KELUARGA'
+                )
+                if (ayah) fillAyahData(ayah)
+
+                // Count siblings for anak_ke
+                const siblings = keluarga
+                    .filter(k => k.hubungan_keluarga === 'ANAK')
+                    .sort((a, b) => new Date(a.tanggal_lahir).getTime() - new Date(b.tanggal_lahir).getTime())
+
+                const anakIndex = siblings.findIndex(s => s.id === w.id)
+                if (anakIndex >= 0) {
+                    const num = anakIndex + 1
+                    setAnakKe(`${num} ( ${numberToText(num)} )`)
+                }
+            }
+        }
+    }
+
+    const handleIbuSelect = (w: Warga) => fillIbuData(w)
+
+    const handleAyahSelect = (w: Warga) => fillAyahData(w)
 
     const validateForm = (): boolean => {
         if (!pengaturan) { setError('Pengaturan desa belum diisi.'); return false }
