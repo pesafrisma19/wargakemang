@@ -377,7 +377,7 @@ export default function SuratKelahiranPage() {
                 <div className="p-5 space-y-4">
                     {ibuMode === 'search' && (
                         <WargaSearchSelect onSelect={handleIbuSelect} selectedWarga={selectedIbu}
-                            onClear={() => setSelectedIbu(null)} />
+                            onClear={() => setSelectedIbu(null)} filterJenisKelamin="P" />
                     )}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
@@ -408,7 +408,7 @@ export default function SuratKelahiranPage() {
                 <div className="p-5 space-y-4">
                     {ayahMode === 'search' && (
                         <WargaSearchSelect onSelect={handleAyahSelect} selectedWarga={selectedAyah}
-                            onClear={() => setSelectedAyah(null)} />
+                            onClear={() => setSelectedAyah(null)} filterJenisKelamin="L" />
                     )}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>

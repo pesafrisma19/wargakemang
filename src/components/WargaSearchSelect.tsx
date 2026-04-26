@@ -9,9 +9,10 @@ interface WargaSearchSelectProps {
     onSelect: (warga: Warga) => void
     selectedWarga: Warga | null
     onClear: () => void
+    filterJenisKelamin?: 'L' | 'P'
 }
 
-export default function WargaSearchSelect({ onSelect, selectedWarga, onClear }: WargaSearchSelectProps) {
+export default function WargaSearchSelect({ onSelect, selectedWarga, onClear, filterJenisKelamin }: WargaSearchSelectProps) {
     const [query, setQuery] = useState('')
     const [results, setResults] = useState<Warga[]>([])
     const [loading, setLoading] = useState(false)
@@ -43,10 +44,16 @@ export default function WargaSearchSelect({ onSelect, selectedWarga, onClear }: 
 
         debounceRef.current = setTimeout(async () => {
             setLoading(true)
-            const { data } = await supabase
+            const query_builder = supabase
                 .from('warga')
                 .select('*')
                 .or(`nama.ilike.%${query}%,nik.ilike.%${query}%`)
+
+            if (filterJenisKelamin) {
+                query_builder.eq('jenis_kelamin', filterJenisKelamin)
+            }
+
+            const { data } = await query_builder
                 .order('nama')
                 .limit(10)
 
