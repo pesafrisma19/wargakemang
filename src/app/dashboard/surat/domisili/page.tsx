@@ -37,7 +37,14 @@ export default function SuratDomisiliPage() {
     const [kewarganegaraan, setKewarganegaraan] = useState('WNI')
     const [pekerjaan, setPekerjaan] = useState('')
     const [agama, setAgama] = useState('')
-    const [alamat, setAlamat] = useState('')
+
+    // Alamat fields
+    const [alamatJalan, setAlamatJalan] = useState('')
+    const [rt, setRt] = useState('')
+    const [rw, setRw] = useState('')
+    const [desa, setDesa] = useState('Kemang')
+    const [kecamatan, setKecamatan] = useState('Bojongpicung')
+    const [kabupaten, setKabupaten] = useState('Cianjur')
 
     // Editable paragraphs
     const [paragrafPembuka, setParagrafPembuka] = useState('')
@@ -104,8 +111,12 @@ export default function SuratDomisiliPage() {
         setKewarganegaraan(warga.kewarganegaraan || 'WNI')
         setPekerjaan(warga.pekerjaan)
         setAgama(warga.agama)
-        const fullAlamat = `${warga.alamat} RT. ${warga.rt} RW. ${warga.rw} Desa ${warga.desa}\nKecamatan ${warga.kecamatan}, Kabupaten ${warga.kabupaten}`
-        setAlamat(fullAlamat)
+        setAlamatJalan(warga.alamat)
+        setRt(warga.rt)
+        setRw(warga.rw)
+        setDesa(warga.desa)
+        setKecamatan(warga.kecamatan)
+        setKabupaten(warga.kabupaten)
     }
 
     const handleClearWarga = () => {
@@ -120,7 +131,12 @@ export default function SuratDomisiliPage() {
             setKewarganegaraan('WNI')
             setPekerjaan('')
             setAgama('')
-            setAlamat('')
+            setAlamatJalan('')
+            setRt('')
+            setRw('')
+            setDesa('Kemang')
+            setKecamatan('Bojongpicung')
+            setKabupaten('Cianjur')
         }
     }
 
@@ -156,12 +172,15 @@ export default function SuratDomisiliPage() {
     }
 
     // Build data object from form
-    const buildData = (): DomisiliData => ({
-        nomorSurat, nama, tempatLahir, tanggalLahir, nik,
-        statusKawin, jenisKelamin, kewarganegaraan, pekerjaan,
-        agama, alamat, paragrafPembuka, paragrafIsi, paragrafPenutup,
-        penandatangan, tanggalSurat,
-    })
+    const buildData = (): DomisiliData => {
+        const fullAlamat = `${alamatJalan} RT. ${rt} RW. ${rw} Desa ${desa}\nKecamatan ${kecamatan}, Kabupaten ${kabupaten}`
+        return {
+            nomorSurat, nama, tempatLahir, tanggalLahir, nik,
+            statusKawin, jenisKelamin, kewarganegaraan, pekerjaan,
+            agama, alamat: fullAlamat, paragrafPembuka, paragrafIsi, paragrafPenutup,
+            penandatangan, tanggalSurat,
+        }
+    }
 
     // 1. SIMPAN - save to archive only
     const handleSimpan = async () => {
@@ -389,11 +408,36 @@ export default function SuratDomisiliPage() {
                                 placeholder="Contoh: Islam"
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800" />
                         </div>
-                        <div className="sm:col-span-2">
-                            <label className="block text-sm font-medium text-gray-600 mb-1">Alamat Lengkap</label>
-                            <textarea value={alamat} onChange={(e) => setAlamat(e.target.value)} rows={3}
-                                placeholder="Kp. ... RT. 00x RW. 00x Desa Kemang&#10;Kecamatan Bojongpicung, Kabupaten Cianjur"
-                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 resize-none" />
+                        <div className="sm:col-span-2 space-y-4 border-t border-gray-100 pt-4 mt-2">
+                            <h3 className="font-medium text-gray-700">Alamat Lengkap</h3>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600 mb-1">Kampung / Jalan</label>
+                                <textarea value={alamatJalan} onChange={(e) => setAlamatJalan(e.target.value)} rows={2}
+                                    placeholder="Kp. Pasir ..."
+                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800 resize-none" />
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600 mb-1">RT</label>
+                                    <input type="text" value={rt} onChange={(e) => setRt(e.target.value)} placeholder="001" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600 mb-1">RW</label>
+                                    <input type="text" value={rw} onChange={(e) => setRw(e.target.value)} placeholder="001" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600 mb-1">Desa</label>
+                                    <input type="text" value={desa} onChange={(e) => setDesa(e.target.value)} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600 mb-1">Kecamatan</label>
+                                    <input type="text" value={kecamatan} onChange={(e) => setKecamatan(e.target.value)} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600 mb-1">Kabupaten</label>
+                                <input type="text" value={kabupaten} onChange={(e) => setKabupaten(e.target.value)} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-800" />
+                            </div>
                         </div>
                     </div>
                 </div>

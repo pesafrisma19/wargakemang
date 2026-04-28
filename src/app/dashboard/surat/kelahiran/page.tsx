@@ -71,7 +71,14 @@ export default function SuratKelahiranPage() {
     const [agamaAyah, setAgamaAyah] = useState('')
     const [pekerjaanAyah, setPekerjaanAyah] = useState('')
     const [wargaNegaraAyah, setWargaNegaraAyah] = useState('INDONESIA')
-    const [alamatAyah, setAlamatAyah] = useState('')
+    
+    // Alamat Ayah fields
+    const [alamatJalanAyah, setAlamatJalanAyah] = useState('')
+    const [rtAyah, setRtAyah] = useState('')
+    const [rwAyah, setRwAyah] = useState('')
+    const [desaAyah, setDesaAyah] = useState('Kemang')
+    const [kecamatanAyah, setKecamatanAyah] = useState('Bojongpicung')
+    const [kabupatenAyah, setKabupatenAyah] = useState('Cianjur')
 
     // Pelapor
     const [namaPelapor, setNamaPelapor] = useState('')
@@ -132,7 +139,14 @@ export default function SuratKelahiranPage() {
         setAgamaAyah(w.agama)
         setPekerjaanAyah(w.pekerjaan)
         setWargaNegaraAyah(w.kewarganegaraan || 'INDONESIA')
-        setAlamatAyah(`${w.alamat} RT. ${w.rt} RW. ${w.rw}\nDesa ${w.desa} Kec. ${w.kecamatan} Kab. ${w.kabupaten}`)
+        
+        setAlamatJalanAyah(w.alamat)
+        setRtAyah(w.rt)
+        setRwAyah(w.rw)
+        setDesaAyah(w.desa)
+        setKecamatanAyah(w.kecamatan)
+        setKabupatenAyah(w.kabupaten)
+        
         setNamaPelapor(w.nama)
     }
 
@@ -199,14 +213,17 @@ export default function SuratKelahiranPage() {
         return true
     }
 
-    const buildData = (): KelahiranData => ({
-        nomorSurat, hariLahir, tanggalLahir, tempatLahir,
-        jenisKelaminAnak, anakKe, namaAnak,
-        namaIbu, umurIbu, agamaIbu,
-        namaAyah, umurAyah, agamaAyah, pekerjaanAyah, wargaNegaraAyah, alamatAyah,
-        namaPelapor, hubunganPelapor, paragrafPenutup,
-        penandatangan, tanggalSurat,
-    })
+    const buildData = (): KelahiranData => {
+        const fullAlamatAyah = `${alamatJalanAyah} RT. ${rtAyah} RW. ${rwAyah}\nDesa ${desaAyah} Kec. ${kecamatanAyah} Kab. ${kabupatenAyah}`
+        return {
+            nomorSurat, hariLahir, tanggalLahir, tempatLahir,
+            jenisKelaminAnak, anakKe, namaAnak,
+            namaIbu, umurIbu, agamaIbu,
+            namaAyah, umurAyah, agamaAyah, pekerjaanAyah, wargaNegaraAyah, alamatAyah: fullAlamatAyah,
+            namaPelapor, hubunganPelapor, paragrafPenutup,
+            penandatangan, tanggalSurat,
+        }
+    }
 
     const handleSimpan = async () => {
         if (!validateForm()) return
@@ -434,10 +451,35 @@ export default function SuratKelahiranPage() {
                             <input type="text" value={wargaNegaraAyah} onChange={(e) => setWargaNegaraAyah(e.target.value)} className={inputClass} />
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Alamat Lengkap</label>
-                        <textarea value={alamatAyah} onChange={(e) => setAlamatAyah(e.target.value)} rows={2}
-                            className={`${inputClass} resize-none`} placeholder="Kp. ... RT. ... RW. ...&#10;Desa Kemang Kec. Bojongpicung Kab. Cianjur" />
+                    <div className="space-y-4 border-t border-gray-100 pt-4 mt-2">
+                        <h3 className="text-xs font-medium text-gray-500 mb-1">Alamat Lengkap</h3>
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Kampung / Jalan</label>
+                            <textarea value={alamatJalanAyah} onChange={(e) => setAlamatJalanAyah(e.target.value)} rows={2}
+                                className={`${inputClass} resize-none`} placeholder="Kp. Pasir ..." />
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">RT</label>
+                                <input type="text" value={rtAyah} onChange={(e) => setRtAyah(e.target.value)} className={inputClass} placeholder="001" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">RW</label>
+                                <input type="text" value={rwAyah} onChange={(e) => setRwAyah(e.target.value)} className={inputClass} placeholder="001" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Desa</label>
+                                <input type="text" value={desaAyah} onChange={(e) => setDesaAyah(e.target.value)} className={inputClass} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Kecamatan</label>
+                                <input type="text" value={kecamatanAyah} onChange={(e) => setKecamatanAyah(e.target.value)} className={inputClass} />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">Kabupaten</label>
+                            <input type="text" value={kabupatenAyah} onChange={(e) => setKabupatenAyah(e.target.value)} className={inputClass} />
+                        </div>
                     </div>
                 </div>
             </div>
