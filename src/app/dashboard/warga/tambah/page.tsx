@@ -72,6 +72,8 @@ export default function TambahWargaPage() {
     const [saving, setSaving] = useState(false)
     const [uploading, setUploading] = useState(false)
     const [isScanning, setIsScanning] = useState(false)
+    const [isUpdateMode, setIsUpdateMode] = useState(false)
+    const [existingId, setExistingId] = useState<string | null>(null)
     const scanInputRef = useRef<HTMLInputElement>(null)
     const [profile, setProfile] = useState<User | null>(null)
     const [fotoPreview, setFotoPreview] = useState<string | null>(null)
@@ -153,36 +155,84 @@ export default function TambahWargaPage() {
 
             const data = result.data
 
-            setFormData(prev => ({
-                ...prev,
-                nik: data.nik || prev.nik,
-                nama: data.nama || prev.nama,
-                tempat_lahir: data.tempat_lahir || prev.tempat_lahir,
-                tanggal_lahir: data.tanggal_lahir || prev.tanggal_lahir,
-                jenis_kelamin: data.jenis_kelamin || prev.jenis_kelamin,
-                alamat: data.alamat || prev.alamat,
-                golongan_darah: data.golongan_darah || prev.golongan_darah,
-                rt: data.rt || prev.rt,
-                rw: data.rw || prev.rw,
-                desa: data.desa || prev.desa,
-                kecamatan: data.kecamatan || prev.kecamatan,
-                agama: data.agama || prev.agama,
-                status_kawin: data.status_kawin || prev.status_kawin,
-                pekerjaan: data.pekerjaan || prev.pekerjaan,
-                kewarganegaraan: data.kewarganegaraan || prev.kewarganegaraan,
-                no_kk: data.no_kk || prev.no_kk,
-                pendidikan: data.pendidikan || prev.pendidikan,
-                nama_ayah: data.nama_ayah || prev.nama_ayah,
-                nama_ibu: data.nama_ibu || prev.nama_ibu,
-            }))
+            // Check if NIK exists
+            let existingWarga = null;
+            if (data.nik) {
+                const { data: dbData } = await supabase.from('warga').select('*').eq('nik', data.nik).single()
+                if (dbData) existingWarga = dbData
+            }
 
-            setToast({ message: 'Data berhasil diekstrak! Silakan periksa kembali sebelum menyimpan.', type: 'success' })
+            if (existingWarga) {
+                setIsUpdateMode(true)
+                setExistingId(existingWarga.id)
+                setToast({ message: `Data ${existingWarga.nama} sudah terdaftar. Mode Auto-Update aktif!`, type: 'info' })
+                
+                // Merge DB with AI
+                setFormData(prev => ({
+                    ...prev,
+                    nik: existingWarga.nik,
+                    nama: existingWarga.nama,
+                    tempat_lahir: existingWarga.tempat_lahir,
+                    tanggal_lahir: existingWarga.tanggal_lahir,
+                    jenis_kelamin: existingWarga.jenis_kelamin,
+                    alamat: existingWarga.alamat,
+                    golongan_darah: existingWarga.golongan_darah || data.golongan_darah || '-',
+                    rt: existingWarga.rt,
+                    rw: existingWarga.rw,
+                    desa: existingWarga.desa,
+                    kecamatan: existingWarga.kecamatan,
+                    agama: existingWarga.agama,
+                    status_kawin: existingWarga.status_kawin,
+                    pekerjaan: existingWarga.pekerjaan,
+                    kewarganegaraan: existingWarga.kewarganegaraan,
+                    no_kk: existingWarga.no_kk || data.no_kk || prev.no_kk,
+                    pendidikan: existingWarga.pendidikan || data.pendidikan || prev.pendidikan,
+                    nama_ayah: existingWarga.nama_ayah || data.nama_ayah || prev.nama_ayah,
+                    nama_ibu: existingWarga.nama_ibu || data.nama_ibu || prev.nama_ibu,
+                    foto_ktp: existingWarga.foto_ktp,
+                    foto_kk: existingWarga.foto_kk,
+                }))
+                
+                if (existingWarga.foto_ktp) setFotoPreview(existingWarga.foto_ktp)
+                if (existingWarga.foto_kk) setFotoKkPreview(existingWarga.foto_kk)
+                
+            } else {
+                setIsUpdateMode(false)
+                setExistingId(null)
+                setFormData(prev => ({
+                    ...prev,
+                    nik: data.nik || prev.nik,
+                    nama: data.nama || prev.nama,
+                    tempat_lahir: data.tempat_lahir || prev.tempat_lahir,
+                    tanggal_lahir: data.tanggal_lahir || prev.tanggal_lahir,
+                    jenis_kelamin: data.jenis_kelamin || prev.jenis_kelamin,
+                    alamat: data.alamat || prev.alamat,
+                    golongan_darah: data.golongan_darah || prev.golongan_darah,
+                    rt: data.rt || prev.rt,
+                    rw: data.rw || prev.rw,
+                    desa: data.desa || prev.desa,
+                    kecamatan: data.kecamatan || prev.kecamatan,
+                    agama: data.agama || prev.agama,
+                    status_kawin: data.status_kawin || prev.status_kawin,
+                    pekerjaan: data.pekerjaan || prev.pekerjaan,
+                    kewarganegaraan: data.kewarganegaraan || prev.kewarganegaraan,
+                    no_kk: data.no_kk || prev.no_kk,
+                    pendidikan: data.pendidikan || prev.pendidikan,
+                    nama_ayah: data.nama_ayah || prev.nama_ayah,
+                    nama_ibu: data.nama_ibu || prev.nama_ibu,
+                }))
+            }
 
-            // Also set as profile photo optionally
+            // Also set as profile photo / kk photo
             try {
                 const { blob, dataUrl } = await compressImage(file)
-                setSelectedFile(blob)
-                setFotoPreview(dataUrl)
+                if (data.jenis_dokumen === 'KK') {
+                    setSelectedKkFile(blob)
+                    setFotoKkPreview(dataUrl)
+                } else {
+                    setSelectedFile(blob)
+                    setFotoPreview(dataUrl)
+                }
             } catch (err) {
                 // Ignore compress error
             }
@@ -278,17 +328,19 @@ export default function TambahWargaPage() {
         setSaving(true)
 
         try {
-            // Check NIK first
-            const { data: existing } = await supabase
-                .from('warga')
-                .select('nik, nama')
-                .eq('nik', formData.nik)
-                .single()
+            // Check NIK first if NOT in update mode
+            if (!isUpdateMode) {
+                const { data: existing } = await supabase
+                    .from('warga')
+                    .select('nik, nama')
+                    .eq('nik', formData.nik)
+                    .single()
 
-            if (existing) {
-                setToast({ message: `NIK ${formData.nik} sudah terdaftar atas nama: ${existing.nama}`, type: 'error' })
-                setSaving(false)
-                return
+                if (existing) {
+                    setToast({ message: `NIK ${formData.nik} sudah terdaftar atas nama: ${existing.nama}`, type: 'error' })
+                    setSaving(false)
+                    return
+                }
             }
 
             let fotoUrl = null
@@ -337,7 +389,7 @@ export default function TambahWargaPage() {
                 fotoKkUrl = publicUrl
             }
 
-            const { error } = await supabase.from('warga').insert([{
+            const payload = {
                 ...formData,
                 nama: formData.nama.toUpperCase(),
                 tempat_lahir: formData.tempat_lahir.toUpperCase(),
@@ -347,32 +399,37 @@ export default function TambahWargaPage() {
                 kecamatan: formData.kecamatan || DEFAULT_KECAMATAN,
                 kabupaten: 'CIANJUR',
                 provinsi: 'JAWA BARAT',
-                foto_ktp: fotoUrl,
-                foto_kk: fotoKkUrl,
+                foto_ktp: fotoUrl || formData.foto_ktp,
+                foto_kk: fotoKkUrl || formData.foto_kk,
                 nama_ayah: formData.nama_ayah,
                 nama_ibu: formData.nama_ibu,
                 pendidikan: formData.pendidikan,
-            }])
+            }
 
-            if (error) {
-                throw error
+            let saveError;
+            if (isUpdateMode && existingId) {
+                const { error } = await supabase.from('warga').update(payload).eq('id', existingId)
+                saveError = error
+            } else {
+                const { error } = await supabase.from('warga').insert([payload])
+                saveError = error
+            }
+
+            if (saveError) {
+                throw saveError
             }
 
             // Auto-update foto_kk for family members
-            if (formData.no_kk && fotoKkUrl && selectedKkFile) {
+            if (formData.no_kk && (fotoKkUrl || formData.foto_kk)) {
                 await supabase
                     .from('warga')
-                    .update({ foto_kk: fotoKkUrl })
+                    .update({ foto_kk: fotoKkUrl || formData.foto_kk })
                     .eq('no_kk', formData.no_kk)
                     .neq('nik', formData.nik) // Update others
             }
 
-            if (error) {
-                throw error
-            }
-
             setSaving(false)
-            setToast({ message: 'Data warga berhasil ditambahkan!', type: 'success' })
+            setToast({ message: isUpdateMode ? 'Data warga berhasil diupdate!' : 'Data warga berhasil ditambahkan!', type: 'success' })
             setTimeout(() => {
                 router.push('/dashboard/warga')
             }, 1000)
@@ -876,7 +933,7 @@ export default function TambahWargaPage() {
                         className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-xl hover:shadow-lg disabled:opacity-50 transition-all order-1 sm:order-2"
                     >
                         <Save size={20} />
-                        {saving ? 'Menyimpan...' : 'Simpan Data'}
+                        {saving ? 'Menyimpan...' : isUpdateMode ? 'Update Data Warga' : 'Simpan Data'}
                     </button>
                 </div>
             </form >
