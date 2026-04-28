@@ -35,9 +35,9 @@ export async function POST(req: NextRequest) {
       Jangan berikan teks tambahan apapun selain JSON.
       Pastikan membaca dengan teliti meskipun gambar agak buram atau ada pantulan cahaya.
 
-      Jika ini adalah KTP, format JSON yang diharapkan:
+      Format JSON yang diharapkan HANYA SEPERTI INI:
       {
-        "jenis_dokumen": "KTP",
+        "jenis_dokumen": "KTP" atau "KK",
         "nik": "string (16 digit)",
         "nama": "string (HURUF KAPITAL SEMUA)",
         "tempat_lahir": "string (HURUF KAPITAL SEMUA)",
@@ -52,12 +52,22 @@ export async function POST(req: NextRequest) {
         "agama": "ISLAM" / "KRISTEN" / "KATOLIK" / "HINDU" / "BUDDHA" / "KONGHUCU",
         "status_kawin": "BELUM KAWIN" / "KAWIN" / "CERAI HIDUP" / "CERAI MATI",
         "pekerjaan": "string",
-        "kewarganegaraan": "WNI" atau "WNA"
+        "kewarganegaraan": "WNI" atau "WNA",
+        "no_kk": "string (16 digit) jika dokumen adalah KK, jika KTP kosongkan",
+        "pendidikan": "string (jika ada di KK, jika KTP kosongkan)",
+        "nama_ayah": "string (jika ada di KK, jika KTP kosongkan)",
+        "nama_ibu": "string (jika ada di KK, jika KTP kosongkan)"
       }
 
-      Jika NIK tidak terbaca 16 digit, usahakan membaca seakurat mungkin angka yang ada.
-      Untuk jenis_kelamin, jika tertulis "LAKI-LAKI" kembalikan "L", jika "PEREMPUAN" kembalikan "P".
-      Untuk tanggal lahir, konversi dari DD-MM-YYYY menjadi format YYYY-MM-DD agar mudah disimpan di database.
+      PERATURAN KHUSUS UNTUK KK (Kartu Keluarga):
+      - Jika dokumen adalah Kartu Keluarga, ekstrak Nomor KK yang ada di bagian atas tengah (tulisan besar).
+      - Untuk data individu (NIK, Nama, Tempat Lahir, dll), ekstrak HANYA DATA ORANG PERTAMA (biasanya Kepala Keluarga / No. 1 di tabel).
+      - Jangan mengambil data orang kedua, ketiga, dst. Fokus pada baris nomor 1 saja.
+
+      PERATURAN UMUM:
+      - Jika NIK atau No KK tidak terbaca 16 digit, usahakan membaca seakurat mungkin angka yang ada.
+      - Untuk jenis_kelamin, jika tertulis "LAKI-LAKI" kembalikan "L", jika "PEREMPUAN" kembalikan "P".
+      - Untuk tanggal lahir, konversi dari DD-MM-YYYY menjadi format YYYY-MM-DD agar mudah disimpan di database.
     `;
 
     const result = await model.generateContent([

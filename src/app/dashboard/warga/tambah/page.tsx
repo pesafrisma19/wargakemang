@@ -170,6 +170,10 @@ export default function TambahWargaPage() {
                 status_kawin: data.status_kawin || prev.status_kawin,
                 pekerjaan: data.pekerjaan || prev.pekerjaan,
                 kewarganegaraan: data.kewarganegaraan || prev.kewarganegaraan,
+                no_kk: data.no_kk || prev.no_kk,
+                pendidikan: data.pendidikan || prev.pendidikan,
+                nama_ayah: data.nama_ayah || prev.nama_ayah,
+                nama_ibu: data.nama_ibu || prev.nama_ibu,
             }))
 
             setToast({ message: 'Data berhasil diekstrak! Silakan periksa kembali sebelum menyimpan.', type: 'success' })
