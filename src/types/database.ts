@@ -12,13 +12,16 @@ export type Agama = 'ISLAM' | 'KRISTEN' | 'KATOLIK' | 'HINDU' | 'BUDDHA' | 'KONG
 
 export type HubunganKeluarga =
   | 'KEPALA KELUARGA'
+  | 'SUAMI'
   | 'ISTRI'
   | 'ANAK'
-  | 'ORANG TUA'
-  | 'MERTUA'
   | 'MENANTU'
   | 'CUCU'
-  | 'FAMILI LAIN';
+  | 'ORANG TUA'
+  | 'MERTUA'
+  | 'FAMILI LAIN'
+  | 'PEMBANTU'
+  | 'LAINNYA';
 
 export interface User {
   id: string;
@@ -57,6 +60,9 @@ export interface Warga {
   nama_ayah: string;
   nama_ibu: string;
   pendidikan: string;
+  status_warga: 'AKTIF' | 'MENINGGAL' | 'PINDAH';
+  disabilitas: string | null;
+  catatan: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -85,6 +91,9 @@ export interface WargaInput {
   nama_ayah?: string;
   nama_ibu?: string;
   pendidikan?: string;
+  status_warga?: 'AKTIF' | 'MENINGGAL' | 'PINDAH';
+  disabilitas?: string | null;
+  catatan?: string | null;
 }
 
 export interface Keluarga {
@@ -124,13 +133,16 @@ export const GOLONGAN_DARAH_OPTIONS: GolonganDarah[] = ['A', 'B', 'AB', 'O', 'A+
 
 export const HUBUNGAN_KELUARGA_OPTIONS: HubunganKeluarga[] = [
   'KEPALA KELUARGA',
+  'SUAMI',
   'ISTRI',
   'ANAK',
-  'ORANG TUA',
-  'MERTUA',
   'MENANTU',
   'CUCU',
+  'ORANG TUA',
+  'MERTUA',
   'FAMILI LAIN',
+  'PEMBANTU',
+  'LAINNYA',
 ];
 
 // Default values

@@ -43,6 +43,9 @@ create table if not exists public.warga (
   no_wa varchar(20),
   hubungan_keluarga varchar(20) default 'Kepala Keluarga',
   foto_ktp text,
+  status_warga varchar(20) not null default 'AKTIF' check (status_warga in ('AKTIF', 'MENINGGAL', 'PINDAH')),
+  disabilitas text,
+  catatan text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -138,3 +141,6 @@ create policy "RT can delete own warga" on public.warga
 -- =====================================================
 -- ALTER TABLE public.warga ADD COLUMN IF NOT EXISTS hubungan_keluarga varchar(20) default 'Kepala Keluarga';
 -- ALTER TABLE public.warga ADD COLUMN IF NOT EXISTS foto_ktp text;
+-- ALTER TABLE public.warga ADD COLUMN IF NOT EXISTS status_warga varchar(20) not null default 'AKTIF' check (status_warga in ('AKTIF', 'MENINGGAL', 'PINDAH'));
+-- ALTER TABLE public.warga ADD COLUMN IF NOT EXISTS disabilitas text;
+-- ALTER TABLE public.warga ADD COLUMN IF NOT EXISTS catatan text;
