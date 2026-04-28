@@ -13,6 +13,7 @@
     "@mistralai/mistralai": "^2.2.1",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.90.1",
+    "groq-sdk": "^1.1.2",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.562.0",

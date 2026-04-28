@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Mistral } from '@mistralai/mistralai';
+import Groq from 'groq-sdk';
 
-// Initialize Gemini API
+// Initialize APIs
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-
-// Initialize Mistral API (Backup)
 const mistral = new Mistral({ apiKey: process.env.MISTRAL_API_KEY || '' });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
 
-// Shared OCR prompt for both Gemini and Mistral
+// Shared OCR prompt for all providers
 const OCR_PROMPT = `
 Anda adalah sistem OCR KTP dan KK Indonesia yang sangat akurat.
 Ekstrak data dari gambar KTP atau Kartu Keluarga yang diberikan dan kembalikan HANYA dalam format JSON.
@@ -60,22 +60,17 @@ PERATURAN UMUM:
 - Untuk tanggal lahir, konversi dari DD-MM-YYYY menjadi format YYYY-MM-DD agar mudah disimpan di database.
 `;
 
-// --- Gemini OCR ---
+// --- Provider 1: Gemini (Google) ---
 async function ocrWithGemini(base64Image: string, mimeType: string): Promise<string> {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
   const result = await model.generateContent([
     OCR_PROMPT,
-    {
-      inlineData: {
-        data: base64Image,
-        mimeType: mimeType,
-      },
-    },
+    { inlineData: { data: base64Image, mimeType } },
   ]);
   return result.response.text();
 }
 
-// --- Mistral OCR (Backup) ---
+// --- Provider 2: Mistral (Prancis) ---
 async function ocrWithMistral(base64Image: string, mimeType: string): Promise<string> {
   const dataUrl = `data:${mimeType};base64,${base64Image}`;
   const result = await mistral.chat.complete({
@@ -96,10 +91,35 @@ async function ocrWithMistral(base64Image: string, mimeType: string): Promise<st
   return '';
 }
 
+// --- Provider 3: Groq (Tercepat) ---
+async function ocrWithGroq(base64Image: string, mimeType: string): Promise<string> {
+  const dataUrl = `data:${mimeType};base64,${base64Image}`;
+  const result = await groq.chat.completions.create({
+    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: OCR_PROMPT },
+          { type: 'image_url', image_url: { url: dataUrl } },
+        ],
+      },
+    ],
+  });
+  return result.choices?.[0]?.message?.content || '';
+}
+
+// Daftar provider berurutan (prioritas)
+const providers = [
+  { name: 'Gemini', fn: ocrWithGemini, envKey: 'GEMINI_API_KEY' },
+  { name: 'Groq', fn: ocrWithGroq, envKey: 'GROQ_API_KEY' },
+  { name: 'Mistral', fn: ocrWithMistral, envKey: 'MISTRAL_API_KEY' },
+];
+
 export async function POST(req: NextRequest) {
   try {
-    // Check if at least one API key is configured
-    if (!process.env.GEMINI_API_KEY && !process.env.MISTRAL_API_KEY) {
+    const hasAnyKey = providers.some(p => !!process.env[p.envKey]);
+    if (!hasAnyKey) {
       return NextResponse.json(
         { error: 'API Key belum dikonfigurasi di server.' },
         { status: 500 }
@@ -120,31 +140,29 @@ export async function POST(req: NextRequest) {
 
     let responseText = '';
     let usedProvider = '';
+    const errors: string[] = [];
 
-    // Try Gemini first, fallback to Mistral
-    if (process.env.GEMINI_API_KEY) {
-      try {
-        responseText = await ocrWithGemini(base64Image, file.type);
-        usedProvider = 'Gemini';
-      } catch (geminiErr: any) {
-        console.warn('Gemini gagal, mencoba Mistral...', geminiErr.message);
-      }
-    }
+    // Try each provider in order until one succeeds
+    for (const provider of providers) {
+      if (!process.env[provider.envKey]) continue;
 
-    // Fallback to Mistral if Gemini failed
-    if (!responseText && process.env.MISTRAL_API_KEY) {
       try {
-        responseText = await ocrWithMistral(base64Image, file.type);
-        usedProvider = 'Mistral';
-      } catch (mistralErr: any) {
-        console.error('Mistral juga gagal:', mistralErr.message);
-        throw new Error('Semua layanan AI sedang tidak tersedia. Silakan coba lagi nanti.');
+        console.log(`Mencoba OCR dengan ${provider.name}...`);
+        responseText = await provider.fn(base64Image, file.type);
+        usedProvider = provider.name;
+        break; // Success, stop trying
+      } catch (err: any) {
+        const errMsg = `${provider.name} gagal: ${err.message}`;
+        console.warn(errMsg);
+        errors.push(errMsg);
       }
     }
 
     if (!responseText) {
-      throw new Error('Tidak ada layanan AI yang tersedia.');
+      throw new Error('Semua layanan AI sedang tidak tersedia. Silakan coba lagi nanti.');
     }
+
+    console.log(`OCR berhasil menggunakan: ${usedProvider}`);
 
     // Clean up the response in case AI wraps it in markdown code blocks
     const cleanedText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
