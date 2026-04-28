@@ -497,7 +497,6 @@ export default function TambahWargaPage() {
                         ref={scanInputRef}
                         type="file"
                         accept="image/*"
-                        capture="environment"
                         onChange={handleScanKtp}
                         className="hidden"
                     />
