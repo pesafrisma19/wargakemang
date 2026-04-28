@@ -107,6 +107,9 @@ export default function TambahWargaPage() {
         nama_ayah: '',
         nama_ibu: '',
         pendidikan: '',
+        status_warga: 'AKTIF',
+        disabilitas: 'Tidak Ada',
+        catatan: '',
     })
 
     useEffect(() => {
@@ -561,12 +564,24 @@ export default function TambahWargaPage() {
                 {(bulkData || [{ formData, isUpdateMode, existingId: null }]).map((item, index) => {
                     const currentFormData = item.formData;
                     const handleCurrentChange = (e: any) => {
+                        const { name, value } = e.target;
                         if (bulkData) {
                             const newBulk = [...bulkData];
-                            (newBulk[index].formData as any)[e.target.name] = e.target.value;
+                            (newBulk[index].formData as any)[name] = value;
+                            
+                            // Auto-sync address fields if editing the first person (Kepala Keluarga)
+                            if (index === 0 && ['alamat', 'rt', 'rw', 'desa', 'kecamatan'].includes(name)) {
+                                for (let i = 1; i < newBulk.length; i++) {
+                                    (newBulk[i].formData as any)[name] = value;
+                                    if (name === 'rw') newBulk[i].formData.rt = '';
+                                }
+                            }
+                            
+                            if (name === 'rw') newBulk[index].formData.rt = '';
                             setBulkData(newBulk);
                         } else {
-                            setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+                            setFormData(prev => ({ ...prev, [name]: value }));
+                            if (name === 'rw') setFormData(prev => ({ ...prev, rt: '' }));
                         }
                     };
                     const isUpdate = item.isUpdateMode;
@@ -673,7 +688,7 @@ export default function TambahWargaPage() {
                     </div>
 
                     {/* Alamat */}
-                    <div className="sm:col-span-2">
+                    <div className={index > 0 ? "hidden" : "sm:col-span-2"}>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Alamat *</label>
                         <textarea
                             name="alamat"
@@ -687,7 +702,7 @@ export default function TambahWargaPage() {
                     </div>
 
                     {/* RW */}
-                    <div>
+                    <div className={index > 0 ? "hidden" : ""}>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">RW *</label>
                         <select
                             name="rw"
@@ -714,7 +729,7 @@ export default function TambahWargaPage() {
                     </div>
 
                     {/* RT */}
-                    <div>
+                    <div className={index > 0 ? "hidden" : ""}>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">RT *</label>
                         <select
                             name="rt"
@@ -732,7 +747,7 @@ export default function TambahWargaPage() {
                     </div>
 
                     {/* Desa */}
-                    <div>
+                    <div className={index > 0 ? "hidden" : ""}>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Desa</label>
                         <input
                             type="text"
@@ -743,7 +758,7 @@ export default function TambahWargaPage() {
                     </div>
 
                     {/* Kecamatan */}
-                    <div>
+                    <div className={index > 0 ? "hidden" : ""}>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Kecamatan</label>
                         <input
                             type="text"
@@ -913,6 +928,56 @@ export default function TambahWargaPage() {
                             />
                         </div>
 
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-4">
+                        {/* Status Warga */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Status Warga *</label>
+                            <select
+                                name="status_warga"
+                                value={currentFormData.status_warga || 'AKTIF'}
+                                onChange={handleCurrentChange}
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                required
+                            >
+                                <option value="AKTIF">HIDUP</option>
+                                <option value="MENINGGAL">MENINGGAL</option>
+                                <option value="PINDAH">PINDAH</option>
+                            </select>
+                        </div>
+
+                        {/* Disabilitas */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Penyandang Disabilitas</label>
+                            <select
+                                name="disabilitas"
+                                value={currentFormData.disabilitas || 'Tidak Ada'}
+                                onChange={handleCurrentChange}
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                            >
+                                <option value="Tidak Ada">Tidak Ada</option>
+                                <option value="Cacat Fisik">Cacat Fisik</option>
+                                <option value="Cacat Netra/Buta">Cacat Netra/Buta</option>
+                                <option value="Cacat Rungu/Wicara">Cacat Rungu/Wicara</option>
+                                <option value="Cacat Mental/Jiwa">Cacat Mental/Jiwa</option>
+                                <option value="Cacat Fisik dan Mental">Cacat Fisik dan Mental</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+
+                        {/* Catatan */}
+                        <div className="sm:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Catatan (Opsional)</label>
+                            <textarea
+                                name="catatan"
+                                value={currentFormData.catatan || ''}
+                                onChange={handleCurrentChange}
+                                rows={2}
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white resize-none"
+                                placeholder="Catatan tambahan (bila ada)..."
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
