@@ -38,31 +38,41 @@ export async function POST(req: NextRequest) {
       Format JSON yang diharapkan HANYA SEPERTI INI:
       {
         "jenis_dokumen": "KTP" atau "KK",
-        "nik": "string (16 digit)",
-        "nama": "string (HURUF KAPITAL SEMUA)",
-        "tempat_lahir": "string (HURUF KAPITAL SEMUA)",
-        "tanggal_lahir": "string format YYYY-MM-DD",
-        "jenis_kelamin": "L" atau "P",
-        "golongan_darah": "A" / "B" / "AB" / "O" / "-",
-        "alamat": "string jalan/kampung tanpa RT/RW/Desa",
+        "no_kk": "string (16 digit) jika dokumen adalah KK, jika KTP kosongkan",
+        "alamat": "string jalan/kampung tanpa RT/RW/Desa (ambil dari kop jika KK, dari baris alamat jika KTP)",
         "rt": "string (3 digit, misal 001)",
         "rw": "string (3 digit, misal 002)",
         "desa": "string nama desa/kelurahan",
         "kecamatan": "string nama kecamatan",
-        "agama": "ISLAM" / "KRISTEN" / "KATOLIK" / "HINDU" / "BUDDHA" / "KONGHUCU",
-        "status_kawin": "BELUM KAWIN" / "KAWIN" / "CERAI HIDUP" / "CERAI MATI",
-        "pekerjaan": "string",
-        "kewarganegaraan": "WNI" atau "WNA",
-        "no_kk": "string (16 digit) jika dokumen adalah KK, jika KTP kosongkan",
-        "pendidikan": "string (jika ada di KK, jika KTP kosongkan)",
-        "nama_ayah": "string (jika ada di KK, jika KTP kosongkan)",
-        "nama_ibu": "string (jika ada di KK, jika KTP kosongkan)"
+        "data_warga": [
+          {
+            "nik": "string (16 digit)",
+            "nama": "string (HURUF KAPITAL SEMUA)",
+            "tempat_lahir": "string (HURUF KAPITAL SEMUA)",
+            "tanggal_lahir": "string format YYYY-MM-DD",
+            "jenis_kelamin": "L" atau "P",
+            "golongan_darah": "A" / "B" / "AB" / "O" / "-",
+            "agama": "ISLAM" / "KRISTEN" / "KATOLIK" / "HINDU" / "BUDDHA" / "KONGHUCU",
+            "status_kawin": "BELUM KAWIN" / "KAWIN" / "CERAI HIDUP" / "CERAI MATI",
+            "pekerjaan": "string",
+            "kewarganegaraan": "WNI" atau "WNA",
+            "pendidikan": "string (jika ada di KK, jika KTP kosongkan)",
+            "nama_ayah": "string (jika ada di KK, jika KTP kosongkan)",
+            "nama_ibu": "string (jika ada di KK, jika KTP kosongkan)",
+            "hubungan_keluarga": "KEPALA KELUARGA / ISTERI / ANAK / FAMILI LAIN dll (jika di KTP kosongkan)"
+          }
+        ]
       }
 
       PERATURAN KHUSUS UNTUK KK (Kartu Keluarga):
-      - Jika dokumen adalah Kartu Keluarga, ekstrak Nomor KK yang ada di bagian atas tengah (tulisan besar).
-      - Untuk data individu (NIK, Nama, Tempat Lahir, dll), ekstrak HANYA DATA ORANG PERTAMA (biasanya Kepala Keluarga / No. 1 di tabel).
-      - Jangan mengambil data orang kedua, ketiga, dst. Fokus pada baris nomor 1 saja.
+      - Jika dokumen adalah Kartu Keluarga, ekstrak Nomor KK, Alamat, RT, RW, Desa, Kecamatan yang ada di bagian atas (Header/Kop KK).
+      - Untuk data individu, ekstrak SEMUA ORANG yang ada di dalam tabel secara berurutan.
+      - Urutkan sesuai dengan nomor urut baris di tabel KK (misal No 1, lalu No 2, dst).
+      - Masukkan semua orang tersebut ke dalam array "data_warga".
+
+      PERATURAN KHUSUS UNTUK KTP:
+      - Jika dokumen adalah KTP, array "data_warga" hanya akan berisi 1 objek (1 orang).
+      - Data alamat untuk JSON utama diambil langsung dari KTP tersebut.
 
       PERATURAN UMUM:
       - Jika NIK atau No KK tidak terbaca 16 digit, usahakan membaca seakurat mungkin angka yang ada.

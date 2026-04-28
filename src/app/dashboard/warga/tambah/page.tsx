@@ -72,8 +72,9 @@ export default function TambahWargaPage() {
     const [saving, setSaving] = useState(false)
     const [uploading, setUploading] = useState(false)
     const [isScanning, setIsScanning] = useState(false)
-    const [isUpdateMode, setIsUpdateMode] = useState(false)
+        const [isUpdateMode, setIsUpdateMode] = useState(false)
     const [existingId, setExistingId] = useState<string | null>(null)
+    const [bulkData, setBulkData] = useState<{ formData: WargaInput, isUpdateMode: boolean, existingId: string | null }[] | null>(null)
     const scanInputRef = useRef<HTMLInputElement>(null)
     const [profile, setProfile] = useState<User | null>(null)
     const [fotoPreview, setFotoPreview] = useState<string | null>(null)
@@ -139,12 +140,12 @@ export default function TambahWargaPage() {
         setToast({ message: 'Sedang membaca KTP...', type: 'info' })
 
         try {
-            const formData = new FormData()
-            formData.append('image', file)
+            const uploadFormData = new FormData()
+            uploadFormData.append('image', file)
 
             const response = await fetch('/api/ocr', {
                 method: 'POST',
-                body: formData,
+                body: uploadFormData,
             })
 
             const result = await response.json()
@@ -155,75 +156,68 @@ export default function TambahWargaPage() {
 
             const data = result.data
 
-            // Check if NIK exists
-            let existingWarga = null;
-            if (data.nik) {
-                const { data: dbData } = await supabase.from('warga').select('*').eq('nik', data.nik).single()
-                if (dbData) existingWarga = dbData
-            }
+            if (data.data_warga && Array.isArray(data.data_warga)) {
+                const processed = await Promise.all(data.data_warga.map(async (wargaData: any) => {
+                    let existingWarga = null;
+                    if (wargaData.nik) {
+                        const { data: dbData } = await supabase.from('warga').select('*').eq('nik', wargaData.nik).single()
+                        if (dbData) existingWarga = dbData
+                    }
 
-            if (existingWarga) {
-                setIsUpdateMode(true)
-                setExistingId(existingWarga.id)
-                setToast({ message: `Data ${existingWarga.nama} sudah terdaftar. Mode Auto-Update aktif!`, type: 'info' })
-                
-                // Merge DB with AI
-                setFormData(prev => ({
-                    ...prev,
-                    nik: existingWarga.nik,
-                    nama: existingWarga.nama,
-                    tempat_lahir: existingWarga.tempat_lahir,
-                    tanggal_lahir: existingWarga.tanggal_lahir,
-                    jenis_kelamin: existingWarga.jenis_kelamin,
-                    alamat: existingWarga.alamat,
-                    golongan_darah: existingWarga.golongan_darah || data.golongan_darah || '-',
-                    rt: existingWarga.rt,
-                    rw: existingWarga.rw,
-                    desa: existingWarga.desa,
-                    kecamatan: existingWarga.kecamatan,
-                    agama: existingWarga.agama,
-                    status_kawin: existingWarga.status_kawin,
-                    pekerjaan: existingWarga.pekerjaan,
-                    kewarganegaraan: existingWarga.kewarganegaraan,
-                    no_kk: existingWarga.no_kk || data.no_kk || prev.no_kk,
-                    pendidikan: existingWarga.pendidikan || data.pendidikan || prev.pendidikan,
-                    nama_ayah: existingWarga.nama_ayah || data.nama_ayah || prev.nama_ayah,
-                    nama_ibu: existingWarga.nama_ibu || data.nama_ibu || prev.nama_ibu,
-                    foto_ktp: existingWarga.foto_ktp,
-                    foto_kk: existingWarga.foto_kk,
+                    if (existingWarga) {
+                        return {
+                            isUpdateMode: true,
+                            existingId: existingWarga.id,
+                            formData: {
+                                ...wargaData,
+                                nik: existingWarga.nik,
+                                nama: existingWarga.nama,
+                                tempat_lahir: existingWarga.tempat_lahir,
+                                tanggal_lahir: existingWarga.tanggal_lahir,
+                                jenis_kelamin: existingWarga.jenis_kelamin,
+                                alamat: existingWarga.alamat,
+                                golongan_darah: existingWarga.golongan_darah || wargaData.golongan_darah || '-',
+                                rt: existingWarga.rt,
+                                rw: existingWarga.rw,
+                                desa: existingWarga.desa,
+                                kecamatan: existingWarga.kecamatan,
+                                agama: existingWarga.agama,
+                                status_kawin: existingWarga.status_kawin,
+                                pekerjaan: existingWarga.pekerjaan,
+                                kewarganegaraan: existingWarga.kewarganegaraan,
+                                no_kk: existingWarga.no_kk || data.no_kk || wargaData.no_kk || formData.no_kk,
+                                pendidikan: existingWarga.pendidikan || wargaData.pendidikan,
+                                nama_ayah: existingWarga.nama_ayah || wargaData.nama_ayah,
+                                nama_ibu: existingWarga.nama_ibu || wargaData.nama_ibu,
+                                foto_ktp: existingWarga.foto_ktp,
+                                foto_kk: existingWarga.foto_kk,
+                            }
+                        }
+                    } else {
+                        return {
+                            isUpdateMode: false,
+                            existingId: null,
+                            formData: {
+                                ...formData,
+                                ...wargaData,
+                                no_kk: data.no_kk || wargaData.no_kk || formData.no_kk,
+                                alamat: data.alamat || wargaData.alamat || formData.alamat,
+                                rt: data.rt || wargaData.rt || formData.rt,
+                                rw: data.rw || wargaData.rw || formData.rw,
+                                desa: data.desa || wargaData.desa || formData.desa,
+                                kecamatan: data.kecamatan || wargaData.kecamatan || formData.kecamatan,
+                            }
+                        }
+                    }
                 }))
                 
-                if (existingWarga.foto_ktp) setFotoPreview(existingWarga.foto_ktp)
-                if (existingWarga.foto_kk) setFotoKkPreview(existingWarga.foto_kk)
-                
+                setBulkData(processed)
+                setToast({ message: `Berhasil mengekstrak ${processed.length} warga! Silakan periksa kembali.`, type: 'success' })
             } else {
-                setIsUpdateMode(false)
-                setExistingId(null)
-                setFormData(prev => ({
-                    ...prev,
-                    nik: data.nik || prev.nik,
-                    nama: data.nama || prev.nama,
-                    tempat_lahir: data.tempat_lahir || prev.tempat_lahir,
-                    tanggal_lahir: data.tanggal_lahir || prev.tanggal_lahir,
-                    jenis_kelamin: data.jenis_kelamin || prev.jenis_kelamin,
-                    alamat: data.alamat || prev.alamat,
-                    golongan_darah: data.golongan_darah || prev.golongan_darah,
-                    rt: data.rt || prev.rt,
-                    rw: data.rw || prev.rw,
-                    desa: data.desa || prev.desa,
-                    kecamatan: data.kecamatan || prev.kecamatan,
-                    agama: data.agama || prev.agama,
-                    status_kawin: data.status_kawin || prev.status_kawin,
-                    pekerjaan: data.pekerjaan || prev.pekerjaan,
-                    kewarganegaraan: data.kewarganegaraan || prev.kewarganegaraan,
-                    no_kk: data.no_kk || prev.no_kk,
-                    pendidikan: data.pendidikan || prev.pendidikan,
-                    nama_ayah: data.nama_ayah || prev.nama_ayah,
-                    nama_ibu: data.nama_ibu || prev.nama_ibu,
-                }))
+                // Fallback if not an array (though it should be)
+                setToast({ message: 'Format data tidak sesuai.', type: 'error' })
             }
 
-            // Also set as profile photo / kk photo
             try {
                 const { blob, dataUrl } = await compressImage(file)
                 if (data.jenis_dokumen === 'KK') {
@@ -233,9 +227,7 @@ export default function TambahWargaPage() {
                     setSelectedFile(blob)
                     setFotoPreview(dataUrl)
                 }
-            } catch (err) {
-                // Ignore compress error
-            }
+            } catch (err) {}
 
         } catch (error: any) {
             setToast({ message: error.message, type: 'error' })
@@ -328,108 +320,84 @@ export default function TambahWargaPage() {
         setSaving(true)
 
         try {
+            const dataToProcess = bulkData || [{ formData, isUpdateMode, existingId }];
+            
             // Check NIK first if NOT in update mode
-            if (!isUpdateMode) {
-                const { data: existing } = await supabase
-                    .from('warga')
-                    .select('nik, nama')
-                    .eq('nik', formData.nik)
-                    .single()
+            for (const item of dataToProcess) {
+                if (!item.isUpdateMode) {
+                    const { data: existing } = await supabase
+                        .from('warga')
+                        .select('nik, nama')
+                        .eq('nik', item.formData.nik)
+                        .single()
 
-                if (existing) {
-                    setToast({ message: `NIK ${formData.nik} sudah terdaftar atas nama: ${existing.nama}`, type: 'error' })
-                    setSaving(false)
-                    return
+                    if (existing) {
+                        setToast({ message: `NIK ${item.formData.nik} sudah terdaftar atas nama: ${existing.nama}`, type: 'error' })
+                        setSaving(false)
+                        return
+                    }
                 }
             }
 
             let fotoUrl = null
-
-            // Upload image if exists
             if (selectedFile) {
-                const fileName = `${formData.nik}-${Date.now()}.webp`
+                const fileName = `${dataToProcess[0].formData.nik}-${Date.now()}.webp`
                 const { data: uploadData, error: uploadError } = await supabase.storage
                     .from('foto-ktp')
-                    .upload(fileName, selectedFile, {
-                        contentType: 'image/webp',
-                        upsert: true
-                    })
+                    .upload(fileName, selectedFile, { contentType: 'image/webp', upsert: true })
 
-                if (uploadError) {
-                    throw new Error('Gagal upload foto: ' + uploadError.message)
-                }
-
-                const { data: { publicUrl } } = supabase.storage
-                    .from('foto-ktp')
-                    .getPublicUrl(fileName)
-
+                if (uploadError) throw new Error('Gagal upload foto: ' + uploadError.message)
+                const { data: { publicUrl } } = supabase.storage.from('foto-ktp').getPublicUrl(fileName)
                 fotoUrl = publicUrl
             }
 
-            let fotoKkUrl = formData.foto_kk || null
-
-            // Upload KK image if selected
+            let fotoKkUrl = dataToProcess[0].formData.foto_kk || null
             if (selectedKkFile) {
-                const fileName = `kk-${formData.nik || 'unknown'}-${Date.now()}.webp`
+                const fileName = `kk-${dataToProcess[0].formData.nik || 'unknown'}-${Date.now()}.webp`
                 const { data: uploadData, error: uploadError } = await supabase.storage
                     .from('foto-ktp')
-                    .upload(fileName, selectedKkFile, {
-                        contentType: 'image/webp',
-                        upsert: true
-                    })
+                    .upload(fileName, selectedKkFile, { contentType: 'image/webp', upsert: true })
 
-                if (uploadError) {
-                    throw new Error('Gagal upload foto KK: ' + uploadError.message)
-                }
-
-                const { data: { publicUrl } } = supabase.storage
-                    .from('foto-ktp')
-                    .getPublicUrl(fileName)
-
+                if (uploadError) throw new Error('Gagal upload foto KK: ' + uploadError.message)
+                const { data: { publicUrl } } = supabase.storage.from('foto-ktp').getPublicUrl(fileName)
                 fotoKkUrl = publicUrl
             }
 
-            const payload = {
-                ...formData,
-                nama: formData.nama.toUpperCase(),
-                tempat_lahir: formData.tempat_lahir.toUpperCase(),
-                alamat: formData.alamat.toUpperCase(),
-                pekerjaan: formData.pekerjaan.toUpperCase(),
-                desa: formData.desa || DEFAULT_DESA,
-                kecamatan: formData.kecamatan || DEFAULT_KECAMATAN,
-                kabupaten: 'CIANJUR',
-                provinsi: 'JAWA BARAT',
-                foto_ktp: fotoUrl || formData.foto_ktp,
-                foto_kk: fotoKkUrl || formData.foto_kk,
-                nama_ayah: formData.nama_ayah,
-                nama_ibu: formData.nama_ibu,
-                pendidikan: formData.pendidikan,
+            for (const item of dataToProcess) {
+                const payload = {
+                    ...item.formData,
+                    nama: item.formData.nama.toUpperCase(),
+                    tempat_lahir: item.formData.tempat_lahir.toUpperCase(),
+                    alamat: item.formData.alamat.toUpperCase(),
+                    pekerjaan: item.formData.pekerjaan.toUpperCase(),
+                    desa: item.formData.desa || DEFAULT_DESA,
+                    kecamatan: item.formData.kecamatan || DEFAULT_KECAMATAN,
+                    kabupaten: 'CIANJUR',
+                    provinsi: 'JAWA BARAT',
+                    foto_ktp: fotoUrl || item.formData.foto_ktp,
+                    foto_kk: fotoKkUrl || item.formData.foto_kk,
+                }
+
+                if (item.isUpdateMode && item.existingId) {
+                    const { error } = await supabase.from('warga').update(payload).eq('id', item.existingId)
+                    if (error) throw error
+                } else {
+                    const { error } = await supabase.from('warga').insert([payload])
+                    if (error) throw error
+                }
             }
 
-            let saveError;
-            if (isUpdateMode && existingId) {
-                const { error } = await supabase.from('warga').update(payload).eq('id', existingId)
-                saveError = error
-            } else {
-                const { error } = await supabase.from('warga').insert([payload])
-                saveError = error
-            }
-
-            if (saveError) {
-                throw saveError
-            }
-
-            // Auto-update foto_kk for family members
-            if (formData.no_kk && (fotoKkUrl || formData.foto_kk)) {
+            // Auto-update foto_kk for family members (only use the first item's KK info)
+            if (dataToProcess[0].formData.no_kk && (fotoKkUrl || dataToProcess[0].formData.foto_kk)) {
                 await supabase
                     .from('warga')
-                    .update({ foto_kk: fotoKkUrl || formData.foto_kk })
-                    .eq('no_kk', formData.no_kk)
-                    .neq('nik', formData.nik) // Update others
+                    .update({ foto_kk: fotoKkUrl || dataToProcess[0].formData.foto_kk })
+                    .eq('no_kk', dataToProcess[0].formData.no_kk)
+                    // don't exclude nik since we might just want to update all of them safely
             }
 
             setSaving(false)
-            setToast({ message: isUpdateMode ? 'Data warga berhasil diupdate!' : 'Data warga berhasil ditambahkan!', type: 'success' })
+            setToast({ message: bulkData ? `Berhasil menyimpan ${bulkData.length} data warga!` : (isUpdateMode ? 'Data warga berhasil diupdate!' : 'Data warga berhasil ditambahkan!'), type: 'success' })
             setTimeout(() => {
                 router.push('/dashboard/warga')
             }, 1000)
@@ -590,15 +558,40 @@ export default function TambahWargaPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                {(bulkData || [{ formData, isUpdateMode, existingId: null }]).map((item, index) => {
+                    const currentFormData = item.formData;
+                    const handleCurrentChange = (e: any) => {
+                        if (bulkData) {
+                            const newBulk = [...bulkData];
+                            (newBulk[index].formData as any)[e.target.name] = e.target.value;
+                            setBulkData(newBulk);
+                        } else {
+                            setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+                        }
+                    };
+                    const isUpdate = item.isUpdateMode;
+
+                    return (
+                        <div key={index} className={bulkData ? "p-4 sm:p-6 bg-gray-50 rounded-xl border border-gray-200 mb-6 relative" : ""}>
+                            {bulkData && (
+                                <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+                                    <h3 className="font-bold text-lg text-gray-800">Warga #{index + 1} - {currentFormData.nama || 'Tanpa Nama'}</h3>
+                                    <div className="flex items-center gap-2">
+                                        {isUpdate && <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">Update Data</span>}
+                                        <button type="button" onClick={() => setBulkData(bulkData.filter((_, i) => i !== index))} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg flex items-center gap-1 text-sm font-medium"><X size={16} /> Hapus</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     {/* NIK */}
                     <div className="sm:col-span-2 md:col-span-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">NIK *</label>
                         <input
                             type="text"
                             name="nik"
-                            value={formData.nik}
-                            onChange={handleChange}
+                            value={currentFormData.nik}
+                            onChange={handleCurrentChange}
                             maxLength={16}
                             inputMode="numeric"
                             pattern="[0-9]{16}"
@@ -614,8 +607,8 @@ export default function TambahWargaPage() {
                         <input
                             type="text"
                             name="nama"
-                            value={formData.nama}
-                            onChange={handleChange}
+                            value={currentFormData.nama}
+                            onChange={handleCurrentChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                             placeholder="Nama sesuai KTP"
                             required
@@ -628,8 +621,8 @@ export default function TambahWargaPage() {
                         <input
                             type="text"
                             name="tempat_lahir"
-                            value={formData.tempat_lahir}
-                            onChange={handleChange}
+                            value={currentFormData.tempat_lahir}
+                            onChange={handleCurrentChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                             placeholder="Kota/Kabupaten"
                             required
@@ -642,8 +635,8 @@ export default function TambahWargaPage() {
                         <input
                             type="date"
                             name="tanggal_lahir"
-                            value={formData.tanggal_lahir}
-                            onChange={handleChange}
+                            value={currentFormData.tanggal_lahir}
+                            onChange={handleCurrentChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                             required
                         />
@@ -654,8 +647,8 @@ export default function TambahWargaPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Jenis Kelamin *</label>
                         <select
                             name="jenis_kelamin"
-                            value={formData.jenis_kelamin}
-                            onChange={handleChange}
+                            value={currentFormData.jenis_kelamin}
+                            onChange={handleCurrentChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                             required
                         >
@@ -669,8 +662,8 @@ export default function TambahWargaPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Golongan Darah</label>
                         <select
                             name="golongan_darah"
-                            value={formData.golongan_darah || '-'}
-                            onChange={handleChange}
+                            value={currentFormData.golongan_darah || '-'}
+                            onChange={handleCurrentChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                         >
                             {GOLONGAN_DARAH_OPTIONS.map(gol => (
@@ -684,8 +677,8 @@ export default function TambahWargaPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Alamat *</label>
                         <textarea
                             name="alamat"
-                            value={formData.alamat}
-                            onChange={handleChange}
+                            value={currentFormData.alamat}
+                            onChange={handleCurrentChange}
                             rows={2}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white resize-none"
                             placeholder="Alamat lengkap (Kampung/Jalan, No. Rumah)"
@@ -698,9 +691,16 @@ export default function TambahWargaPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">RW *</label>
                         <select
                             name="rw"
-                            value={formData.rw}
+                            value={currentFormData.rw}
                             onChange={(e) => {
-                                setFormData(prev => ({ ...prev, rw: e.target.value, rt: '' }))
+                                if (bulkData) {
+                                    const newBulk = [...bulkData];
+                                    newBulk[index].formData.rw = e.target.value;
+                                    newBulk[index].formData.rt = '';
+                                    setBulkData(newBulk);
+                                } else {
+                                    setFormData(prev => ({ ...prev, rw: e.target.value, rt: '' }))
+                                }
                             }}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                             required
@@ -718,14 +718,14 @@ export default function TambahWargaPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">RT *</label>
                         <select
                             name="rt"
-                            value={formData.rt}
-                            onChange={handleChange}
+                            value={currentFormData.rt}
+                            onChange={handleCurrentChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                             required
-                            disabled={profile?.role !== 'admin' || !formData.rw}
+                            disabled={profile?.role !== 'admin' || !currentFormData.rw}
                         >
                             <option value="">Pilih RT</option>
-                            {formData.rw && RW_RT_STRUCTURE[formData.rw as keyof typeof RW_RT_STRUCTURE]?.map(rt => (
+                            {currentFormData.rw && RW_RT_STRUCTURE[currentFormData.rw as keyof typeof RW_RT_STRUCTURE]?.map(rt => (
                                 <option key={rt} value={rt}>RT {rt}</option>
                             ))}
                         </select>
@@ -758,8 +758,8 @@ export default function TambahWargaPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Agama *</label>
                         <select
                             name="agama"
-                            value={formData.agama}
-                            onChange={handleChange}
+                            value={currentFormData.agama}
+                            onChange={handleCurrentChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                             required
                         >
@@ -774,8 +774,8 @@ export default function TambahWargaPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Status Kawin *</label>
                         <select
                             name="status_kawin"
-                            value={formData.status_kawin}
-                            onChange={handleChange}
+                            value={currentFormData.status_kawin}
+                            onChange={handleCurrentChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                             required
                         >
@@ -790,8 +790,8 @@ export default function TambahWargaPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Pendidikan Terakhir *</label>
                         <select
                             name="pendidikan"
-                            value={formData.pendidikan || ''}
-                            onChange={handleChange}
+                            value={currentFormData.pendidikan || ''}
+                            onChange={handleCurrentChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                         >
                             <option value="">Pilih Pendidikan</option>
@@ -814,8 +814,8 @@ export default function TambahWargaPage() {
                         <input
                             type="text"
                             name="pekerjaan"
-                            value={formData.pekerjaan}
-                            onChange={handleChange}
+                            value={currentFormData.pekerjaan}
+                            onChange={handleCurrentChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                             placeholder="Pekerjaan"
                             required
@@ -827,8 +827,8 @@ export default function TambahWargaPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Kewarganegaraan *</label>
                         <select
                             name="kewarganegaraan"
-                            value={formData.kewarganegaraan}
-                            onChange={handleChange}
+                            value={currentFormData.kewarganegaraan}
+                            onChange={handleCurrentChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                             required
                         >
@@ -843,8 +843,8 @@ export default function TambahWargaPage() {
                         <input
                             type="text"
                             name="no_kk"
-                            value={formData.no_kk || ''}
-                            onChange={handleChange}
+                            value={currentFormData.no_kk || ''}
+                            onChange={handleCurrentChange}
                             onBlur={handleKkBlur}
                             maxLength={16}
                             inputMode="numeric"
@@ -858,8 +858,8 @@ export default function TambahWargaPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Hubungan Keluarga</label>
                         <select
                             name="hubungan_keluarga"
-                            value={formData.hubungan_keluarga}
-                            onChange={handleChange}
+                            value={currentFormData.hubungan_keluarga}
+                            onChange={handleCurrentChange}
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                         >
                             {HUBUNGAN_KELUARGA_OPTIONS.map(hub => (
@@ -874,8 +874,8 @@ export default function TambahWargaPage() {
                         <input
                             type="tel"
                             name="no_wa"
-                            value={formData.no_wa || ''}
-                            onChange={handleChange}
+                            value={currentFormData.no_wa || ''}
+                            onChange={handleCurrentChange}
                             inputMode="tel"
                             className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                             placeholder="08xxxxxxxxxx"
@@ -893,8 +893,8 @@ export default function TambahWargaPage() {
                             <input
                                 type="text"
                                 name="nama_ayah"
-                                value={formData.nama_ayah}
-                                onChange={handleChange}
+                                value={currentFormData.nama_ayah}
+                                onChange={handleCurrentChange}
                                 className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                                 placeholder="Nama Ayah"
                             />
@@ -906,20 +906,21 @@ export default function TambahWargaPage() {
                             <input
                                 type="text"
                                 name="nama_ibu"
-                                value={formData.nama_ibu}
-                                onChange={handleChange}
+                                value={currentFormData.nama_ibu}
+                                onChange={handleCurrentChange}
                                 className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
                                 placeholder="Nama Ibu"
                             />
                         </div>
 
-
                     </div>
                 </div>
+            </div>
+        );
+    })}
 
-
-                {/* Submit Button */}
-                <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-100">
+    {/* Submit Button */}
+    <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-100">
                     <Link
                         href="/dashboard/warga"
                         className="w-full sm:w-auto px-6 py-3 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors text-center order-2 sm:order-1"
@@ -932,7 +933,7 @@ export default function TambahWargaPage() {
                         className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-xl hover:shadow-lg disabled:opacity-50 transition-all order-1 sm:order-2"
                     >
                         <Save size={20} />
-                        {saving ? 'Menyimpan...' : isUpdateMode ? 'Update Data Warga' : 'Simpan Data'}
+                        {saving ? 'Menyimpan...' : bulkData ? 'Simpan Semua Warga' : (isUpdateMode ? 'Update Data Warga' : 'Simpan Data')}
                     </button>
                 </div>
             </form >
