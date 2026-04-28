@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(bytes);
     const base64Image = buffer.toString('base64');
 
-    // Use Gemini 1.5 Flash (fastest and cheapest for text extraction)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Use Gemini 2.5 Flash
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
       Anda adalah sistem OCR KTP dan KK Indonesia yang sangat akurat.
