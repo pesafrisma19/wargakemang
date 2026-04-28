@@ -14,7 +14,7 @@ import {
     DEFAULT_DESA,
     DEFAULT_KECAMATAN
 } from '@/types/database'
-import { ArrowLeft, Save, Camera, X } from 'lucide-react'
+import { ArrowLeft, Save, Camera, X, ScanLine, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import Toast, { ToastType } from '@/components/ui/Toast'
 
@@ -71,6 +71,8 @@ export default function TambahWargaPage() {
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [saving, setSaving] = useState(false)
     const [uploading, setUploading] = useState(false)
+    const [isScanning, setIsScanning] = useState(false)
+    const scanInputRef = useRef<HTMLInputElement>(null)
     const [profile, setProfile] = useState<User | null>(null)
     const [fotoPreview, setFotoPreview] = useState<string | null>(null)
     const [selectedFile, setSelectedFile] = useState<Blob | null>(null)
@@ -126,6 +128,70 @@ export default function TambahWargaPage() {
         }
         fetchProfile()
     }, [])
+
+    const handleScanKtp = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setIsScanning(true)
+        setToast({ message: 'Sedang membaca KTP...', type: 'info' })
+
+        try {
+            const formData = new FormData()
+            formData.append('image', file)
+
+            const response = await fetch('/api/ocr', {
+                method: 'POST',
+                body: formData,
+            })
+
+            const result = await response.json()
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Gagal membaca KTP')
+            }
+
+            const data = result.data
+
+            setFormData(prev => ({
+                ...prev,
+                nik: data.nik || prev.nik,
+                nama: data.nama || prev.nama,
+                tempat_lahir: data.tempat_lahir || prev.tempat_lahir,
+                tanggal_lahir: data.tanggal_lahir || prev.tanggal_lahir,
+                jenis_kelamin: data.jenis_kelamin || prev.jenis_kelamin,
+                alamat: data.alamat || prev.alamat,
+                golongan_darah: data.golongan_darah || prev.golongan_darah,
+                rt: data.rt || prev.rt,
+                rw: data.rw || prev.rw,
+                desa: data.desa || prev.desa,
+                kecamatan: data.kecamatan || prev.kecamatan,
+                agama: data.agama || prev.agama,
+                status_kawin: data.status_kawin || prev.status_kawin,
+                pekerjaan: data.pekerjaan || prev.pekerjaan,
+                kewarganegaraan: data.kewarganegaraan || prev.kewarganegaraan,
+            }))
+
+            setToast({ message: 'Data berhasil diekstrak! Silakan periksa kembali sebelum menyimpan.', type: 'success' })
+
+            // Also set as profile photo optionally
+            try {
+                const { blob, dataUrl } = await compressImage(file)
+                setSelectedFile(blob)
+                setFotoPreview(dataUrl)
+            } catch (err) {
+                // Ignore compress error
+            }
+
+        } catch (error: any) {
+            setToast({ message: error.message, type: 'error' })
+        } finally {
+            setIsScanning(false)
+            if (scanInputRef.current) {
+                scanInputRef.current.value = ''
+            }
+        }
+    }
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -344,6 +410,38 @@ export default function TambahWargaPage() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8">
+                
+                {/* Auto-Fill Banner */}
+                <div className="mb-8 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                        <h3 className="text-sm font-semibold text-blue-900 flex items-center gap-2">
+                            <ScanLine size={18} className="text-blue-600" />
+                            Auto-fill dengan AI
+                        </h3>
+                        <p className="text-xs text-blue-700 mt-1">Upload foto KTP, AI akan otomatis mengisi semua data di bawah ini.</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => !isScanning && scanInputRef.current?.click()}
+                        disabled={isScanning}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-medium text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    >
+                        {isScanning ? (
+                            <><Loader2 size={16} className="animate-spin" /> Sedang Membaca...</>
+                        ) : (
+                            <><Camera size={16} /> Scan KTP Sekarang</>
+                        )}
+                    </button>
+                    <input
+                        ref={scanInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleScanKtp}
+                        className="hidden"
+                    />
+                </div>
+
                 {/* Foto KTP */}
                 <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Foto KTP (Opsional)</label>
