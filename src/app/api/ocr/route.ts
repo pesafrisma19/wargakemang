@@ -26,9 +26,7 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(bytes);
     const base64Image = buffer.toString('base64');
 
-    // Use Gemini 2.5 Flash
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
+    // We will initialize the model inside the try-catch to allow fallback
     const prompt = `
       Anda adalah sistem OCR KTP dan KK Indonesia yang sangat akurat.
       Ekstrak data dari gambar KTP atau Kartu Keluarga yang diberikan dan kembalikan HANYA dalam format JSON.
@@ -80,15 +78,21 @@ export async function POST(req: NextRequest) {
       - Untuk tanggal lahir, konversi dari DD-MM-YYYY menjadi format YYYY-MM-DD agar mudah disimpan di database.
     `;
 
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: base64Image,
-          mimeType: file.type,
-        },
-      },
-    ]);
+    let result;
+    try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      result = await model.generateContent([
+        prompt,
+        { inlineData: { data: base64Image, mimeType: file.type } },
+      ]);
+    } catch (err: any) {
+      console.warn("Gemini 2.5 Flash gagal (mungkin 503 Overloaded), mencoba fallback ke Gemini 2.0 Flash...", err.message);
+      const fallbackModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      result = await fallbackModel.generateContent([
+        prompt,
+        { inlineData: { data: base64Image, mimeType: file.type } },
+      ]);
+    }
 
     const responseText = result.response.text();
     
