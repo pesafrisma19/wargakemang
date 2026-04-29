@@ -53,13 +53,15 @@ export default function KelolaUsersPage() {
     const handleDelete = async (userId: string) => {
         setActionLoading(true)
         try {
-            // Delete from users table (auth user will remain but can't access)
-            const { error } = await supabase
-                .from('users')
-                .delete()
-                .eq('id', userId)
+            // Call server-side API to delete user from both Auth and users table
+            const response = await fetch('/api/admin/delete-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId })
+            })
 
-            if (error) throw error
+            const result = await response.json()
+            if (!response.ok) throw new Error(result.error)
 
             setUsers(users.filter(u => u.id !== userId))
             setDeleteConfirm(null)
