@@ -41,7 +41,7 @@ const SURAT_TYPES = [
         icon: '🏪',
         color: 'from-blue-500 to-indigo-500',
         bgLight: 'bg-blue-50',
-        available: false,
+        available: true,
     },
     {
         jenis: 'sktm' as const,
