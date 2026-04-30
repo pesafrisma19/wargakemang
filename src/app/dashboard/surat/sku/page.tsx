@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Warga, Pengaturan, Penandatangan } from '@/types/database'
 import WargaSearchSelect from '@/components/WargaSearchSelect'
+import AddressForm, { AddressData, formatAddress } from '@/components/AddressForm'
 import {
     generateSuratUsaha,
     UsahaData,
@@ -47,7 +48,8 @@ export default function SuratUsahaPage() {
 
     // Data usaha (manual input)
     const [bidangUsaha, setBidangUsaha] = useState('')
-    const [lokasiUsaha, setLokasiUsaha] = useState('')
+    const initialAddress: AddressData = { alamat: '', rt: '', rw: '', desa: 'Kemang', kecamatan: 'Bojongpicung', kabupaten: 'Cianjur' }
+    const [lokasiUsaha, setLokasiUsaha] = useState<AddressData>(initialAddress)
     const [lamaUsaha, setLamaUsaha] = useState('')
 
     // Editable paragraphs
@@ -90,16 +92,16 @@ export default function SuratUsahaPage() {
 
     // Auto-update paragrafIsi when usaha fields change
     useEffect(() => {
-        if (!paragrafIsiEdited && (bidangUsaha || lokasiUsaha || lamaUsaha)) {
-            setParagrafIsi(getDefaultParagrafIsiUsaha(bidangUsaha, lokasiUsaha, lamaUsaha))
+        if (!paragrafIsiEdited && (bidangUsaha || formatAddress(lokasiUsaha) || lamaUsaha)) {
+            setParagrafIsi(getDefaultParagrafIsiUsaha(bidangUsaha, formatAddress(lokasiUsaha), lamaUsaha))
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [bidangUsaha, lokasiUsaha, lamaUsaha])
 
     // Auto-fill lokasi usaha from alamat when warga selected
     useEffect(() => {
-        if (alamatJalan && rt && rw && !lokasiUsaha) {
-            setLokasiUsaha(`${alamatJalan} RT. ${rt} RW. ${rw} Desa ${desa} Kecamatan ${kecamatan} Kabupaten ${kabupaten}`)
+        if (alamatJalan && rt && rw && !lokasiUsaha.alamat) {
+            setLokasiUsaha({ alamat: alamatJalan || '', rt: rt || '', rw: rw || '', desa: desa || 'Kemang', kecamatan: kecamatan || 'Bojongpicung', kabupaten: kabupaten || 'Cianjur' })
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [alamatJalan, rt, rw])
@@ -120,7 +122,7 @@ export default function SuratUsahaPage() {
         setDesa(warga.desa)
         setKecamatan(warga.kecamatan)
         setKabupaten(warga.kabupaten)
-        setLokasiUsaha(`${warga.alamat} RT. ${warga.rt} RW. ${warga.rw} Desa ${warga.desa} Kecamatan ${warga.kecamatan} Kabupaten ${warga.kabupaten}`)
+        setLokasiUsaha({ alamat: warga.alamat || '', rt: warga.rt || '', rw: warga.rw || '', desa: warga.desa || 'Kemang', kecamatan: warga.kecamatan || 'Bojongpicung', kabupaten: warga.kabupaten || 'Cianjur' })
     }
 
     const handleClearWarga = () => {
@@ -129,7 +131,7 @@ export default function SuratUsahaPage() {
             setNama(''); setTempatLahir(''); setTanggalLahir(''); setNik('')
             setJenisKelamin(''); setKewarganegaraan('Indonesia'); setPekerjaan(''); setAgama('')
             setAlamatJalan(''); setRt(''); setRw(''); setDesa('Kemang'); setKecamatan('Bojongpicung'); setKabupaten('Cianjur')
-            setLokasiUsaha('')
+            setLokasiUsaha(initialAddress)
         }
     }
 
@@ -141,7 +143,7 @@ export default function SuratUsahaPage() {
     const showDataForm = inputMode === 'manual' || selectedWarga || nama
 
     const resetParagrafIsi = () => {
-        setParagrafIsi(getDefaultParagrafIsiUsaha(bidangUsaha, lokasiUsaha, lamaUsaha))
+        setParagrafIsi(getDefaultParagrafIsiUsaha(bidangUsaha, formatAddress(lokasiUsaha), lamaUsaha))
         setParagrafIsiEdited(false)
     }
 
@@ -158,7 +160,7 @@ export default function SuratUsahaPage() {
         return {
             nomorSurat, nama, tempatLahir, tanggalLahir, nik,
             jenisKelamin, kewarganegaraan, pekerjaan, agama, alamat: fullAlamat,
-            bidangUsaha, lokasiUsaha, lamaUsaha,
+            bidangUsaha, lokasiUsaha: formatAddress(lokasiUsaha), lamaUsaha,
             paragrafPembuka, paragrafIsi, paragrafPenutup,
             penandatangan, tanggalSurat,
         }
@@ -336,12 +338,17 @@ export default function SuratUsahaPage() {
                                 className={`${inputCls} resize-none`} />
                             <p className="text-xs text-gray-400 mt-1">Tulis per baris jika lebih dari satu bidang usaha. Contoh: 1. Jual Beli ... dst</p>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1">Lokasi Usaha</label>
-                            <textarea value={lokasiUsaha} onChange={(e) => setLokasiUsaha(e.target.value)} rows={2}
-                                placeholder="Kp Jakapari RT. 001 RW 005 Desa Kemang..."
-                                className={`${inputCls} resize-none`} />
-                            <p className="text-xs text-gray-400 mt-1">Otomatis terisi dari alamat warga, bisa diedit jika lokasi usaha berbeda</p>
+                        <div className="pt-2 border-t border-gray-100 mt-2">
+                            <AddressForm 
+                                labelPrefix="Lokasi Usaha" 
+                                value={lokasiUsaha} 
+                                onChange={setLokasiUsaha} 
+                                inputCls={inputCls} 
+                                defaultDesa={pengaturan?.nama_desa} 
+                                defaultKecamatan={pengaturan?.nama_kecamatan} 
+                                defaultKabupaten={pengaturan?.nama_kabupaten} 
+                            />
+                            <p className="text-xs text-gray-400 mt-2">Otomatis terisi dari alamat warga, bisa diedit jika lokasi usaha berbeda</p>
                         </div>
                         <div className="sm:max-w-xs">
                             <label className="block text-sm font-medium text-gray-600 mb-1">Lama Usaha (Tahun)</label>
