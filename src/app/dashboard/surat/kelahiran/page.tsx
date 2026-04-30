@@ -171,17 +171,17 @@ export default function SuratKelahiranPage() {
                 .eq('no_kk', w.no_kk)
 
             if (keluarga) {
-                // Find ibu (by name match or hubungan_keluarga ISTRI)
+                // Find ibu (by name match or if Anak, fallback to ISTRI)
                 const ibu = keluarga.find(k =>
                     (w.nama_ibu && k.nama.toUpperCase() === w.nama_ibu.toUpperCase()) ||
-                    k.hubungan_keluarga === 'ISTRI'
+                    (w.hubungan_keluarga === 'ANAK' && k.hubungan_keluarga === 'ISTRI')
                 )
                 if (ibu) fillIbuData(ibu)
 
-                // Find ayah (by name match or hubungan_keluarga KEPALA KELUARGA)
+                // Find ayah (by name match or if Anak, fallback to KEPALA KELUARGA/SUAMI)
                 const ayah = keluarga.find(k =>
                     (w.nama_ayah && k.nama.toUpperCase() === w.nama_ayah.toUpperCase()) ||
-                    k.hubungan_keluarga === 'KEPALA KELUARGA'
+                    (w.hubungan_keluarga === 'ANAK' && (k.hubungan_keluarga === 'KEPALA KELUARGA' || k.hubungan_keluarga === 'SUAMI'))
                 )
                 if (ayah) fillAyahData(ayah)
 
