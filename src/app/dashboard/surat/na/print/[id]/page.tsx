@@ -94,22 +94,23 @@ export default function SuratNAPrint() {
         <div className="bg-gray-100 min-h-screen py-8 print:py-0 print:bg-white font-serif text-[14px] text-black">
             <style jsx global>{`
                 @media print {
-                    @page { size: A4 portrait; margin: 1.5cm 1.5cm 1.5cm 2cm; }
+                    @page { size: 215mm 330mm; margin: 1cm 1cm 1cm 1.5cm; }
                     body { background-color: white; -webkit-print-color-adjust: exact; }
-                    .page-break { page-break-after: always; }
+                    .page-break { break-after: page; page-break-after: always; }
+                    .f4-page:last-child { break-after: auto; page-break-after: auto; }
                     .no-print { display: none; }
                 }
-                .a4-page {
-                    width: 210mm;
-                    min-height: 297mm;
-                    padding: 15mm 15mm 15mm 20mm;
-                    margin: 0 auto;
+                .f4-page {
+                    width: 215mm;
+                    min-height: 330mm;
+                    padding: 10mm 10mm 10mm 15mm;
+                    margin: 0 auto 20px auto;
                     background: white;
                     box-shadow: 0 0 10px rgba(0,0,0,0.1);
                     position: relative;
                 }
                 @media print {
-                    .a4-page {
+                    .f4-page {
                         box-shadow: none;
                         margin: 0;
                         padding: 0;
@@ -127,7 +128,7 @@ export default function SuratNAPrint() {
             {/* ==============================================
                 MODEL N1 - PENGANTAR NIKAH
             =============================================== */}
-            <div className="a4-page page-break flex flex-col">
+            <div className="f4-page page-break flex flex-col">
                 <LampiranHeader no="IV" judul="FORMULIR SURAT PENGANTAR NIKAH" model="Model N1" />
                 
                 <div className="mb-4 font-bold">
@@ -202,7 +203,7 @@ export default function SuratNAPrint() {
             {/* ==============================================
                 MODEL N2 - PERMOHONAN KEHENDAK NIKAH
             =============================================== */}
-            <div className="a4-page page-break flex flex-col">
+            <div className="f4-page page-break flex flex-col">
                 <LampiranHeader no="VI" judul="FORMULIR PERMOHONAN KEHENDAK NIKAH" model="Model N2" />
                 
                 <div className="flex justify-between mb-6">
@@ -258,7 +259,7 @@ export default function SuratNAPrint() {
             {/* ==============================================
                 MODEL N4 - PERSETUJUAN CALON PENGANTIN
             =============================================== */}
-            <div className="a4-page page-break flex flex-col">
+            <div className="f4-page page-break flex flex-col">
                 <LampiranHeader no="VI" judul="FORMULIR PERSETUJUAN CALON PENGANTIN" model="Model N4" />
                 
                 <div className="text-center font-bold underline mb-4">SURAT PERSETUJUAN PENGANTIN</div>
@@ -312,7 +313,7 @@ export default function SuratNAPrint() {
                 MODEL N6 - KEMATIAN SUAMI/ISTRI (Optional)
             =============================================== */}
             {data.cetakN6 && data.mantan && (
-                <div className="a4-page flex flex-col">
+                <div className="f4-page flex flex-col">
                     <LampiranHeader no="X" judul="FORMULIR SURAT KETERANGAN KEMATIAN" model="Model N6" />
                     
                     <div className="mb-4 font-bold">
