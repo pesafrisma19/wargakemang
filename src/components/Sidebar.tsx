@@ -26,7 +26,8 @@ interface SidebarProps {
     userRW?: string
 }
 
-const menuItems = [
+// Full Desktop Menu
+const desktopMenuItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, adminOnly: false },
     { name: 'Data Warga', href: '/dashboard/warga', icon: Users, adminOnly: false },
     { name: 'Data Keluarga', href: '/dashboard/keluarga', icon: Home, adminOnly: false },
@@ -36,18 +37,9 @@ const menuItems = [
     { name: 'Kelola Users', href: '/dashboard/users', icon: UserCog, adminOnly: true },
 ]
 
-// Mobile bottom nav items (simplified)
-const mobileNavItems = [
-    { name: 'Home', href: '/dashboard', icon: LayoutDashboard, adminOnly: false },
-    { name: 'Warga', href: '/dashboard/warga', icon: Users, adminOnly: false },
-    { name: 'Surat', href: '/dashboard/surat', icon: FileText, adminOnly: true },
-    { name: 'Tambah', href: '/dashboard/warga/tambah', icon: UserPlus, adminOnly: false },
-    { name: 'Lainnya', href: '/dashboard/pengaturan', icon: Settings, adminOnly: true },
-]
-
 export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarProps) {
     const pathname = usePathname()
-    const [isOpen, setIsOpen] = useState(false)
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const router = useRouter()
     const supabase = createClient()
 
@@ -56,6 +48,34 @@ export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarP
         router.push('/login')
         router.refresh()
     }
+
+    // --- Mobile Navigation Logic ---
+    const mobileMainItems = userRole === 'admin' 
+        ? [
+            { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
+            { name: 'Warga', href: '/dashboard/warga', icon: Users },
+            { name: 'Tambah', href: '/dashboard/warga/tambah', icon: UserPlus },
+            { name: 'Surat', href: '/dashboard/surat', icon: FileText },
+        ]
+        : [
+            { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
+            { name: 'Warga', href: '/dashboard/warga', icon: Users },
+            { name: 'Tambah', href: '/dashboard/warga/tambah', icon: UserPlus },
+            { name: 'Keluarga', href: '/dashboard/keluarga', icon: Home },
+        ]
+
+    const mobileMoreItems = userRole === 'admin'
+        ? [
+            { name: 'Data Keluarga', href: '/dashboard/keluarga', icon: Home },
+            { name: 'Import Data', href: '/dashboard/import', icon: FileSpreadsheet },
+            { name: 'Pengaturan', href: '/dashboard/pengaturan', icon: Settings },
+            { name: 'Kelola Users', href: '/dashboard/users', icon: UserCog },
+        ]
+        : [
+            { name: 'Import Data', href: '/dashboard/import', icon: FileSpreadsheet },
+        ]
+
+    const isAdmin = userRole === 'admin'
 
     return (
         <>
@@ -70,43 +90,84 @@ export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarP
                             <h1 className="text-base font-bold text-white">Warga Kemang</h1>
                         </div>
                     </div>
-                    <button
-                        onClick={handleLogout}
-                        className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                    >
-                        <LogOut size={20} />
-                    </button>
                 </div>
             </header>
 
             {/* Mobile Bottom Navigation */}
             <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-2 py-2 safe-area-pb">
                 <div className="flex items-center justify-around">
-                    {mobileNavItems
-                        .filter(item => !item.adminOnly || userRole === 'admin')
-                        .map((item) => {
-                            const isActive = pathname === item.href ||
-                                (item.href !== '/dashboard' && pathname.startsWith(item.href))
-                            return (
-                                <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${isActive
-                                        ? 'text-emerald-600'
-                                        : 'text-gray-500 hover:text-gray-700'
-                                        }`}
-                                >
-                                    <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-                                    <span className={`text-xs ${isActive ? 'font-semibold' : 'font-medium'}`}>
-                                        {item.name}
-                                    </span>
-                                </Link>
-                            )
-                        })}
+                    {mobileMainItems.map((item) => {
+                        const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+                        return (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${isActive ? 'text-emerald-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                                <span className={`text-xs ${isActive ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
+                            </Link>
+                        )
+                    })}
+                    {/* Menu Lainnya Button */}
+                    <button
+                        onClick={() => setIsMobileMenuOpen(true)}
+                        className={`flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all ${isMobileMenuOpen ? 'text-emerald-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        <Menu size={22} strokeWidth={isMobileMenuOpen ? 2.5 : 2} />
+                        <span className={`text-xs ${isMobileMenuOpen ? 'font-semibold' : 'font-medium'}`}>Lainnya</span>
+                    </button>
                 </div>
             </nav>
 
-            {/* Desktop Sidebar */}
+            {/* Mobile Menu Bottom Sheet (Popup) */}
+            {isMobileMenuOpen && (
+                <div className="lg:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/50 transition-opacity" onClick={() => setIsMobileMenuOpen(false)}>
+                    <div 
+                        className="bg-white w-full rounded-t-3xl p-5 pb-8 animate-slide-up"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-800">Menu Lainnya</h3>
+                                <p className="text-sm text-gray-500">{isAdmin ? 'Administrator' : `RT ${userRT} / RW ${userRW}`}</p>
+                            </div>
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                            {mobileMoreItems.map((item) => {
+                                const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+                                return (
+                                    <Link
+                                        key={item.name}
+                                        href={item.href}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${isActive ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-white border-gray-100 text-gray-600 hover:border-emerald-200 hover:bg-gray-50'}`}
+                                    >
+                                        <div className={`p-3 rounded-xl ${isActive ? 'bg-emerald-100' : 'bg-gray-100'}`}>
+                                            <item.icon size={24} className={isActive ? 'text-emerald-600' : 'text-gray-500'} />
+                                        </div>
+                                        <span className="text-sm font-medium text-center">{item.name}</span>
+                                    </Link>
+                                )
+                            })}
+                        </div>
+
+                        <button
+                            onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
+                            className="w-full flex items-center justify-center gap-2 py-3.5 bg-red-50 text-red-600 font-medium rounded-xl hover:bg-red-100 transition-colors"
+                        >
+                            <LogOut size={20} />
+                            Keluar dari Akun
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Desktop Sidebar (No changes) */}
             <aside className="hidden lg:block fixed top-0 left-0 z-40 h-screen w-64 bg-gradient-to-b from-emerald-700 to-teal-800">
                 <div className="flex flex-col h-full">
                     {/* Logo */}
@@ -126,25 +187,21 @@ export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarP
                     <div className="p-4 mx-4 mt-4 bg-white/10 rounded-xl">
                         <p className="text-white font-medium truncate">{userName}</p>
                         <p className="text-white/60 text-sm">
-                            {userRole === 'admin' ? 'Administrator' : `RT ${userRT} / RW ${userRW}`}
+                            {isAdmin ? 'Administrator' : `RT ${userRT} / RW ${userRW}`}
                         </p>
                     </div>
 
                     {/* Navigation */}
                     <nav className="flex-1 p-4 space-y-2">
-                        {menuItems
-                            .filter(item => !item.adminOnly || userRole === 'admin')
+                        {desktopMenuItems
+                            .filter(item => !item.adminOnly || isAdmin)
                             .map((item) => {
-                                const isActive = pathname === item.href ||
-                                    (item.href !== '/dashboard' && pathname.startsWith(item.href))
+                                const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
                                 return (
                                     <Link
                                         key={item.name}
                                         href={item.href}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                                            ? 'bg-white text-emerald-700 shadow-lg'
-                                            : 'text-white/80 hover:bg-white/10 hover:text-white'
-                                            }`}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive ? 'bg-white text-emerald-700 shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}
                                     >
                                         <item.icon size={20} />
                                         <span className="font-medium">{item.name}</span>
