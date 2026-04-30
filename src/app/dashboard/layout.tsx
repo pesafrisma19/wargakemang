@@ -28,16 +28,18 @@ export default async function DashboardLayout({
     const userRW = profile?.rw || ''
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Sidebar
-                userName={userName}
-                userRole={userRole}
-                userRT={userRT}
-                userRW={userRW}
-            />
+        <div className="min-h-screen bg-gray-50 print:bg-white">
+            <div className="print:hidden">
+                <Sidebar
+                    userName={userName}
+                    userRole={userRole}
+                    userRT={userRT}
+                    userRW={userRW}
+                />
+            </div>
             {/* Main content with padding for mobile header/footer and desktop sidebar */}
-            <main className="lg:ml-64 min-h-screen pt-16 pb-20 lg:pt-0 lg:pb-0">
-                <div className="p-4 lg:p-8">
+            <main className="lg:ml-64 min-h-screen pt-16 pb-20 lg:pt-0 lg:pb-0 print:m-0 print:p-0 print:min-h-0">
+                <div className="p-4 lg:p-8 print:p-0">
                     {children}
                 </div>
             </main>
