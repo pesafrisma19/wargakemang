@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Warga, Pengaturan, Penandatangan } from '@/types/database'
 import WargaSearchSelect from '@/components/WargaSearchSelect'
+import AddressForm, { AddressData, formatAddress } from '@/components/AddressForm'
 import { ArrowLeft, Save, Check, AlertCircle, Search, Eye, UserPlus, Download } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -39,7 +40,8 @@ export default function SuratNAPage() {
     const [pemohonKewarganegaraan, setPemohonKewarganegaraan] = useState('Indonesia')
     const [pemohonAgama, setPemohonAgama] = useState('Islam')
     const [pemohonPekerjaan, setPemohonPekerjaan] = useState('')
-    const [pemohonAlamat, setPemohonAlamat] = useState('')
+    const initialAddress: AddressData = { alamat: '', rt: '', rw: '', desa: '', kecamatan: '', kabupaten: '' }
+    const [pemohonAlamat, setPemohonAlamat] = useState<AddressData>(initialAddress)
 
     // Data Pasangan
     const [pasanganNama, setPasanganNama] = useState('')
@@ -49,7 +51,7 @@ export default function SuratNAPage() {
     const [pasanganTanggalLahir, setPasanganTanggalLahir] = useState('')
     const [pasanganAgama, setPasanganAgama] = useState('Islam')
     const [pasanganPekerjaan, setPasanganPekerjaan] = useState('')
-    const [pasanganAlamat, setPasanganAlamat] = useState('')
+    const [pasanganAlamat, setPasanganAlamat] = useState<AddressData>(initialAddress)
     const [pasanganKewarganegaraan, setPasanganKewarganegaraan] = useState('Indonesia')
 
     // Data Ayah
@@ -59,7 +61,7 @@ export default function SuratNAPage() {
     const [ayahTanggalLahir, setAyahTanggalLahir] = useState('')
     const [ayahAgama, setAyahAgama] = useState('Islam')
     const [ayahPekerjaan, setAyahPekerjaan] = useState('')
-    const [ayahAlamat, setAyahAlamat] = useState('')
+    const [ayahAlamat, setAyahAlamat] = useState<AddressData>(initialAddress)
 
     // Data Ibu
     const [ibuNama, setIbuNama] = useState('')
@@ -68,7 +70,7 @@ export default function SuratNAPage() {
     const [ibuTanggalLahir, setIbuTanggalLahir] = useState('')
     const [ibuAgama, setIbuAgama] = useState('Islam')
     const [ibuPekerjaan, setIbuPekerjaan] = useState('')
-    const [ibuAlamat, setIbuAlamat] = useState('')
+    const [ibuAlamat, setIbuAlamat] = useState<AddressData>(initialAddress)
 
     // Data N6 (Kematian)
     const [cetakN6, setCetakN6] = useState(false)
@@ -79,7 +81,7 @@ export default function SuratNAPage() {
     const [mantanTanggalLahir, setMantanTanggalLahir] = useState('')
     const [mantanAgama, setMantanAgama] = useState('Islam')
     const [mantanPekerjaan, setMantanPekerjaan] = useState('')
-    const [mantanAlamat, setMantanAlamat] = useState('')
+    const [mantanAlamat, setMantanAlamat] = useState<AddressData>(initialAddress)
     const [mantanTglMeninggal, setMantanTglMeninggal] = useState('')
     const [mantanTempatMeninggal, setMantanTempatMeninggal] = useState('')
 
@@ -119,7 +121,7 @@ export default function SuratNAPage() {
                 setAyahTanggalLahir(ayah.tanggal_lahir)
                 setAyahAgama(ayah.agama)
                 setAyahPekerjaan(ayah.pekerjaan)
-                setAyahAlamat(`${ayah.alamat} RT. ${ayah.rt} RW. ${ayah.rw} Desa ${ayah.desa} Kec. ${ayah.kecamatan} Kab. ${ayah.kabupaten}`)
+                setAyahAlamat({ alamat: ayah.alamat || '', rt: ayah.rt || '', rw: ayah.rw || '', desa: ayah.desa || '', kecamatan: ayah.kecamatan || '', kabupaten: ayah.kabupaten || '' })
             }
             if (ibu) {
                 setIbuNik(ibu.nik)
@@ -127,7 +129,7 @@ export default function SuratNAPage() {
                 setIbuTanggalLahir(ibu.tanggal_lahir)
                 setIbuAgama(ibu.agama)
                 setIbuPekerjaan(ibu.pekerjaan)
-                setIbuAlamat(`${ibu.alamat} RT. ${ibu.rt} RW. ${ibu.rw} Desa ${ibu.desa} Kec. ${ibu.kecamatan} Kab. ${ibu.kabupaten}`)
+                setIbuAlamat({ alamat: ibu.alamat || '', rt: ibu.rt || '', rw: ibu.rw || '', desa: ibu.desa || '', kecamatan: ibu.kecamatan || '', kabupaten: ibu.kabupaten || '' })
             }
         }
     }
@@ -151,7 +153,7 @@ export default function SuratNAPage() {
         setPemohonKewarganegaraan(warga.kewarganegaraan === 'WNI' ? 'Indonesia' : (warga.kewarganegaraan || 'Indonesia'))
         setPemohonAgama(warga.agama)
         setPemohonPekerjaan(warga.pekerjaan)
-        setPemohonAlamat(`${warga.alamat} RT. ${warga.rt} RW. ${warga.rw} Desa ${warga.desa} Kec. ${warga.kecamatan} Kab. ${warga.kabupaten}`)
+        setPemohonAlamat({ alamat: warga.alamat || '', rt: warga.rt || '', rw: warga.rw || '', desa: warga.desa || '', kecamatan: warga.kecamatan || '', kabupaten: warga.kabupaten || '' })
 
         // Smart Gender & Status Logic
         let status = 'Jejaka/Perawan'
@@ -199,26 +201,26 @@ export default function SuratNAPage() {
             pemohon: {
                 nama: pemohonNama, nik: pemohonNik, tempatLahir: pemohonTempatLahir, 
                 tanggalLahir: pemohonTanggalLahir, agama: pemohonAgama, pekerjaan: pemohonPekerjaan, 
-                alamat: pemohonAlamat, kewarganegaraan: pemohonKewarganegaraan
+                alamat: formatAddress(pemohonAlamat), kewarganegaraan: pemohonKewarganegaraan
             },
             pasangan: {
                 nama: pasanganNama, binBinti: pasanganBinBinti, nik: pasanganNik, 
                 tempatLahir: pasanganTempatLahir, tanggalLahir: pasanganTanggalLahir, 
-                agama: pasanganAgama, pekerjaan: pasanganPekerjaan, alamat: pasanganAlamat, 
+                agama: pasanganAgama, pekerjaan: pasanganPekerjaan, alamat: formatAddress(pasanganAlamat), 
                 kewarganegaraan: pasanganKewarganegaraan
             },
             ayah: {
                 nama: ayahNama, nik: ayahNik, tempatLahir: ayahTempatLahir, 
-                tanggalLahir: ayahTanggalLahir, agama: ayahAgama, pekerjaan: ayahPekerjaan, alamat: ayahAlamat
+                tanggalLahir: ayahTanggalLahir, agama: ayahAgama, pekerjaan: ayahPekerjaan, alamat: formatAddress(ayahAlamat)
             },
             ibu: {
                 nama: ibuNama, nik: ibuNik, tempatLahir: ibuTempatLahir, 
-                tanggalLahir: ibuTanggalLahir, agama: ibuAgama, pekerjaan: ibuPekerjaan, alamat: ibuAlamat
+                tanggalLahir: ibuTanggalLahir, agama: ibuAgama, pekerjaan: ibuPekerjaan, alamat: formatAddress(ibuAlamat)
             },
             mantan: cetakN6 ? {
                 nama: mantanNama, binBinti: mantanBinBinti, nik: mantanNik, 
                 tempatLahir: mantanTempatLahir, tanggalLahir: mantanTanggalLahir, 
-                agama: mantanAgama, pekerjaan: mantanPekerjaan, alamat: mantanAlamat, 
+                agama: mantanAgama, pekerjaan: mantanPekerjaan, alamat: formatAddress(mantanAlamat), 
                 tglMeninggal: mantanTglMeninggal, tempatMeninggal: mantanTempatMeninggal
             } : null,
             penandatangan,
@@ -363,7 +365,7 @@ export default function SuratNAPage() {
                                 </>
                             )}
                             
-                            <div className="sm:col-span-2"><label className="block text-sm font-medium text-gray-600 mb-1">Alamat Lengkap</label><textarea value={pemohonAlamat} onChange={(e) => setPemohonAlamat(e.target.value)} rows={2} className={`${inputCls} resize-none`} /></div>
+                            <div className="sm:col-span-2 pt-2 border-t border-gray-100 mt-2"><AddressForm labelPrefix="Alamat Pemohon" value={pemohonAlamat} onChange={setPemohonAlamat} inputCls={inputCls} defaultDesa={pengaturan?.nama_desa} defaultKecamatan={pengaturan?.nama_kecamatan} defaultKabupaten={pengaturan?.nama_kabupaten} /></div>
                         </div>
                     </div>
 
@@ -382,7 +384,7 @@ export default function SuratNAPage() {
                             <div><label className="block text-sm font-medium text-gray-600 mb-1">Tanggal Lahir</label><input type="date" value={pasanganTanggalLahir} onChange={(e) => setPasanganTanggalLahir(e.target.value)} className={inputCls} /></div>
                             <div><label className="block text-sm font-medium text-gray-600 mb-1">Agama</label><input type="text" value={pasanganAgama} onChange={(e) => setPasanganAgama(e.target.value)} className={inputCls} /></div>
                             <div><label className="block text-sm font-medium text-gray-600 mb-1">Pekerjaan</label><input type="text" value={pasanganPekerjaan} onChange={(e) => setPasanganPekerjaan(e.target.value)} className={inputCls} /></div>
-                            <div className="sm:col-span-2"><label className="block text-sm font-medium text-gray-600 mb-1">Alamat / Tempat Tinggal</label><textarea value={pasanganAlamat} onChange={(e) => setPasanganAlamat(e.target.value)} rows={2} className={`${inputCls} resize-none`} /></div>
+                            <div className="sm:col-span-2 pt-2 border-t border-gray-100 mt-2"><AddressForm labelPrefix="Alamat Pasangan" value={pasanganAlamat} onChange={setPasanganAlamat} inputCls={inputCls} defaultDesa={pengaturan?.nama_desa} defaultKecamatan={pengaturan?.nama_kecamatan} defaultKabupaten={pengaturan?.nama_kabupaten} /></div>
                         </div>
                     </div>
 
@@ -404,7 +406,7 @@ export default function SuratNAPage() {
                                 </div>
                                 <div><label className="block text-sm font-medium text-gray-600 mb-1">Agama</label><input type="text" value={ayahAgama} onChange={(e) => setAyahAgama(e.target.value)} className={inputCls} /></div>
                                 <div><label className="block text-sm font-medium text-gray-600 mb-1">Pekerjaan</label><input type="text" value={ayahPekerjaan} onChange={(e) => setAyahPekerjaan(e.target.value)} className={inputCls} /></div>
-                                <div><label className="block text-sm font-medium text-gray-600 mb-1">Alamat</label><textarea value={ayahAlamat} onChange={(e) => setAyahAlamat(e.target.value)} rows={2} className={`${inputCls} resize-none`} /></div>
+                                <div className="sm:col-span-2 pt-2 border-t border-gray-100 mt-2"><AddressForm labelPrefix="Alamat Ayah" value={ayahAlamat} onChange={setAyahAlamat} inputCls={inputCls} defaultDesa={pengaturan?.nama_desa} defaultKecamatan={pengaturan?.nama_kecamatan} defaultKabupaten={pengaturan?.nama_kabupaten} /></div>
                             </div>
                             
                             {/* Ibu */}
@@ -418,7 +420,7 @@ export default function SuratNAPage() {
                                 </div>
                                 <div><label className="block text-sm font-medium text-gray-600 mb-1">Agama</label><input type="text" value={ibuAgama} onChange={(e) => setIbuAgama(e.target.value)} className={inputCls} /></div>
                                 <div><label className="block text-sm font-medium text-gray-600 mb-1">Pekerjaan</label><input type="text" value={ibuPekerjaan} onChange={(e) => setIbuPekerjaan(e.target.value)} className={inputCls} /></div>
-                                <div><label className="block text-sm font-medium text-gray-600 mb-1">Alamat</label><textarea value={ibuAlamat} onChange={(e) => setIbuAlamat(e.target.value)} rows={2} className={`${inputCls} resize-none`} /></div>
+                                <div className="sm:col-span-2 pt-2 border-t border-gray-100 mt-2"><AddressForm labelPrefix="Alamat Ibu" value={ibuAlamat} onChange={setIbuAlamat} inputCls={inputCls} defaultDesa={pengaturan?.nama_desa} defaultKecamatan={pengaturan?.nama_kecamatan} defaultKabupaten={pengaturan?.nama_kabupaten} /></div>
                             </div>
                         </div>
                     </div>
@@ -445,7 +447,7 @@ export default function SuratNAPage() {
                                 <div><label className="block text-sm font-medium text-gray-600 mb-1">Tempat Lahir</label><input type="text" value={mantanTempatLahir} onChange={(e) => setMantanTempatLahir(e.target.value)} className={inputCls} /></div>
                                 <div><label className="block text-sm font-medium text-gray-600 mb-1">Tanggal Lahir</label><input type="date" value={mantanTanggalLahir} onChange={(e) => setMantanTanggalLahir(e.target.value)} className={inputCls} /></div>
                                 <div className="sm:col-span-2"><label className="block text-sm font-medium text-gray-600 mb-1">Pekerjaan</label><input type="text" value={mantanPekerjaan} onChange={(e) => setMantanPekerjaan(e.target.value)} className={inputCls} /></div>
-                                <div className="sm:col-span-2"><label className="block text-sm font-medium text-gray-600 mb-1">Alamat Terakhir</label><textarea value={mantanAlamat} onChange={(e) => setMantanAlamat(e.target.value)} rows={2} className={`${inputCls} resize-none`} /></div>
+                                <div className="sm:col-span-2 pt-2 border-t border-gray-100 mt-2"><AddressForm labelPrefix="Alamat Terakhir" value={mantanAlamat} onChange={setMantanAlamat} inputCls={inputCls} defaultDesa={pengaturan?.nama_desa} defaultKecamatan={pengaturan?.nama_kecamatan} defaultKabupaten={pengaturan?.nama_kabupaten} /></div>
                                 
                                 <div className="sm:col-span-2 mt-2 border-t border-amber-200 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div><label className="block text-sm font-bold text-amber-800 mb-1">Meninggal Pada Tanggal</label><input type="date" value={mantanTglMeninggal} onChange={(e) => setMantanTglMeninggal(e.target.value)} className={`${inputCls} border-amber-300 bg-amber-50`} /></div>

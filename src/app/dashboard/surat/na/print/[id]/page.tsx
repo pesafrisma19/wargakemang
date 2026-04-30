@@ -31,12 +31,6 @@ export default function SuratNAPrint() {
 
             setLoading(false)
 
-            // Auto print after a short delay for images/fonts to load
-            if (suratData) {
-                setTimeout(() => {
-                    window.print()
-                }, 1000)
-            }
         }
         if (id) fetchData()
     }, [id])
