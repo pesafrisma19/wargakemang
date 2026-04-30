@@ -83,7 +83,7 @@ export default function SuratNAPrint() {
                 <span className="flex-1 whitespace-nowrap">{label}</span>
             </div>
             <div className="w-4 shrink-0">:</div>
-            <div className="flex-1 font-bold">{value || '-'}</div>
+            <div className="flex-1">{value || '-'}</div>
         </div>
     )
 
@@ -91,7 +91,7 @@ export default function SuratNAPrint() {
     const namaKades = pengaturan.nama_kades?.toUpperCase() || ''
 
     return (
-        <div className="bg-gray-100 min-h-screen py-8 print:py-0 print:bg-white font-serif text-[13px] leading-[18px] text-black">
+        <div className="bg-gray-100 min-h-screen py-8 print:py-0 print:bg-white text-[13px] leading-[18px] text-black" style={{ fontFamily: '"Bookman Old Style", serif' }}>
             <style jsx global>{`
                 @media print {
                     @page { size: 215mm 330mm; margin: 1cm 1cm 1cm 1.5cm; }
@@ -132,9 +132,9 @@ export default function SuratNAPrint() {
                 <LampiranHeader no="IV" judul="FORMULIR SURAT PENGANTAR NIKAH" model="Model N1" />
                 
                 <div className="mb-4 font-bold">
-                    <div className="flex"><span className="w-[200px]">KANTOR DESA/KELURAHAN</span><span>: {pengaturan.nama_desa?.toUpperCase()}</span></div>
-                    <div className="flex"><span className="w-[200px]">KECAMATAN</span><span>: {pengaturan.nama_kecamatan?.toUpperCase()}</span></div>
-                    <div className="flex"><span className="w-[200px]">KABUPATEN/KOTA</span><span>: {pengaturan.nama_kabupaten?.toUpperCase()}</span></div>
+                    <div className="flex"><span className="w-[280px] whitespace-nowrap">KANTOR DESA/KELURAHAN</span><span>: {pengaturan.nama_desa?.toUpperCase()}</span></div>
+                    <div className="flex"><span className="w-[280px] whitespace-nowrap">KECAMATAN</span><span>: {pengaturan.nama_kecamatan?.toUpperCase()}</span></div>
+                    <div className="flex"><span className="w-[280px] whitespace-nowrap">KABUPATEN/KOTA</span><span>: {pengaturan.nama_kabupaten?.toUpperCase()}</span></div>
                 </div>
 
                 <div className="text-center font-bold mb-4">
@@ -317,9 +317,9 @@ export default function SuratNAPrint() {
                     <LampiranHeader no="X" judul="FORMULIR SURAT KETERANGAN KEMATIAN" model="Model N6" />
                     
                     <div className="mb-4 font-bold">
-                        <div className="flex"><span className="w-[200px]">KANTOR DESA/KELURAHAN</span><span>: {pengaturan.nama_desa?.toUpperCase()}</span></div>
-                        <div className="flex"><span className="w-[200px]">KECAMATAN</span><span>: {pengaturan.nama_kecamatan?.toUpperCase()}</span></div>
-                        <div className="flex"><span className="w-[200px]">KABUPATEN/KOTA</span><span>: {pengaturan.nama_kabupaten?.toUpperCase()}</span></div>
+                        <div className="flex"><span className="w-[280px] whitespace-nowrap">KANTOR DESA/KELURAHAN</span><span>: {pengaturan.nama_desa?.toUpperCase()}</span></div>
+                        <div className="flex"><span className="w-[280px] whitespace-nowrap">KECAMATAN</span><span>: {pengaturan.nama_kecamatan?.toUpperCase()}</span></div>
+                        <div className="flex"><span className="w-[280px] whitespace-nowrap">KABUPATEN/KOTA</span><span>: {pengaturan.nama_kabupaten?.toUpperCase()}</span></div>
                     </div>
 
                     <div className="text-center font-bold mb-6">
