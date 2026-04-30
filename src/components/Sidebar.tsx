@@ -50,17 +50,15 @@ export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarP
     }
 
     // --- Mobile Navigation Logic ---
-    const mobileMainItems = userRole === 'admin' 
+    const mobileMainItems = userRole === 'admin'
         ? [
             { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
             { name: 'Warga', href: '/dashboard/warga', icon: Users },
-            { name: 'Tambah', href: '/dashboard/warga/tambah', icon: UserPlus },
             { name: 'Surat', href: '/dashboard/surat', icon: FileText },
         ]
         : [
             { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
             { name: 'Warga', href: '/dashboard/warga', icon: Users },
-            { name: 'Tambah', href: '/dashboard/warga/tambah', icon: UserPlus },
             { name: 'Keluarga', href: '/dashboard/keluarga', icon: Home },
         ]
 
@@ -123,7 +121,7 @@ export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarP
             {/* Mobile Menu Bottom Sheet (Popup) */}
             {isMobileMenuOpen && (
                 <div className="lg:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/50 transition-opacity" onClick={() => setIsMobileMenuOpen(false)}>
-                    <div 
+                    <div
                         className="bg-white w-full rounded-t-3xl p-5 pb-8 animate-slide-up"
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -136,7 +134,7 @@ export default function Sidebar({ userName, userRole, userRT, userRW }: SidebarP
                                 <X size={20} />
                             </button>
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-3 mb-6">
                             {mobileMoreItems.map((item) => {
                                 const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
