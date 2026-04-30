@@ -83,7 +83,7 @@ export default function SuratNAPrint() {
                 <span className="flex-1 whitespace-nowrap">{label}</span>
             </div>
             <div className="w-4 shrink-0">:</div>
-            <div className="flex-1">{value || '-'}</div>
+            <div className="flex-1 font-bold">{value || '-'}</div>
         </div>
     )
 
@@ -155,10 +155,10 @@ export default function SuratNAPrint() {
                     <FieldRow index="8" label="Alamat" value={pemohon?.alamat} />
                     
                     <div className="flex mb-1">
-                        <div className="w-[180px] flex">
-                            <span className="w-5">9.</span><span className="flex-1">Status Pernikahan</span>
+                        <div className="w-[280px] flex shrink-0">
+                            <span className="w-6 shrink-0">9.</span><span className="flex-1 whitespace-nowrap">Status Pernikahan</span>
                         </div>
-                        <div className="w-4"></div>
+                        <div className="w-4 shrink-0"></div>
                         <div className="flex-1"></div>
                     </div>
                     
