@@ -57,7 +57,9 @@ export default function SuratNAPrint() {
     }
 
     const data = surat.data_surat
-    const warga = surat.warga
+    // No longer strictly rely on `warga` relation since it can be manual input
+    const pemohon = data.pemohon
+    const isLaki = data.jenisKelamin === 'L'
 
     // Helper components
     const LampiranHeader = ({ no, judul, model }: { no: string, judul: string, model: string }) => (
@@ -87,7 +89,6 @@ export default function SuratNAPrint() {
 
     // Derived logic
     const namaKades = pengaturan.nama_kades?.toUpperCase() || ''
-    const isLaki = warga?.jenis_kelamin === 'L'
 
     return (
         <div className="bg-gray-100 min-h-screen py-8 print:py-0 print:bg-white font-serif text-[14px] text-black">
@@ -143,14 +144,14 @@ export default function SuratNAPrint() {
                 <p className="mb-2">Yang bertanda tangan di bawah ini menerangkan dengan sesungguhnya bahwa :</p>
                 
                 <div className="mb-2">
-                    <FieldRow index="1" label="Nama" value={warga?.nama} />
-                    <FieldRow index="2" label="Nomor Induk Kependudukan (NIK)" value={warga?.nik} />
-                    <FieldRow index="3" label="Jenis Kelamin" value={warga?.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'} />
-                    <FieldRow index="4" label="Tempat dan tanggal Lahir" value={`${warga?.tempat_lahir}, ${formatDate(warga?.tanggal_lahir)}`} />
-                    <FieldRow index="5" label="Kewarganegaraan" value={warga?.kewarganegaraan === 'WNI' ? 'Indonesia' : warga?.kewarganegaraan} />
-                    <FieldRow index="6" label="Agama" value={warga?.agama} />
-                    <FieldRow index="7" label="Pekerjaan" value={warga?.pekerjaan} />
-                    <FieldRow index="8" label="Alamat" value={`${warga?.alamat} RT. ${warga?.rt} RW. ${warga?.rw} Desa ${warga?.desa} Kecamatan ${warga?.kecamatan} Kabupaten ${warga?.kabupaten}`} />
+                    <FieldRow index="1" label="Nama" value={pemohon?.nama} />
+                    <FieldRow index="2" label="Nomor Induk Kependudukan (NIK)" value={pemohon?.nik} />
+                    <FieldRow index="3" label="Jenis Kelamin" value={isLaki ? 'Laki-laki' : 'Perempuan'} />
+                    <FieldRow index="4" label="Tempat dan tanggal Lahir" value={`${pemohon?.tempatLahir}, ${formatDate(pemohon?.tanggalLahir)}`} />
+                    <FieldRow index="5" label="Kewarganegaraan" value={pemohon?.kewarganegaraan === 'WNI' ? 'Indonesia' : pemohon?.kewarganegaraan} />
+                    <FieldRow index="6" label="Agama" value={pemohon?.agama} />
+                    <FieldRow index="7" label="Pekerjaan" value={pemohon?.pekerjaan} />
+                    <FieldRow index="8" label="Alamat" value={pemohon?.alamat} />
                     
                     <div className="flex mb-1">
                         <div className="w-[180px] flex">
@@ -217,8 +218,8 @@ export default function SuratNAPrint() {
 
                 <p className="mb-2">Dengan hormat, kami mengajukan permohonan kehendak nikah untuk atas nama :</p>
                 <div className="mb-4">
-                    <FieldRow label="Calon suami" value={isLaki ? warga?.nama : data.pasangan?.nama} />
-                    <FieldRow label="Calon istri" value={!isLaki ? warga?.nama : data.pasangan?.nama} />
+                    <FieldRow label="Calon suami" value={isLaki ? pemohon?.nama : data.pasangan?.nama} />
+                    <FieldRow label="Calon istri" value={!isLaki ? pemohon?.nama : data.pasangan?.nama} />
                     <FieldRow label="Hari/Tanggal/Jam" value=".................................................." />
                     <FieldRow label="Tempat akad nikah" value=".................................................." />
                 </div>
@@ -249,7 +250,7 @@ export default function SuratNAPrint() {
                         <p>Wasalam</p>
                         <p>Pemohon</p>
                         <div className="h-24"></div>
-                        <p className="font-bold underline">{warga?.nama}</p>
+                        <p className="font-bold underline">{pemohon?.nama}</p>
                     </div>
                 </div>
             </div>
@@ -266,26 +267,26 @@ export default function SuratNAPrint() {
                 
                 <p className="font-bold mb-1">A. Calon Suami</p>
                 <div className="mb-4">
-                    <FieldRow index="1" label="Nama lengkap dan alias" value={isLaki ? warga?.nama : data.pasangan?.nama} />
+                    <FieldRow index="1" label="Nama lengkap dan alias" value={isLaki ? pemohon?.nama : data.pasangan?.nama} />
                     <FieldRow index="2" label="Bin" value={isLaki ? data.ayah?.nama : data.pasangan?.binBinti} />
-                    <FieldRow index="3" label="Nomor Induk Kependudukan (NIK)" value={isLaki ? warga?.nik : data.pasangan?.nik} />
-                    <FieldRow index="4" label="Tempat dan tanggal Lahir" value={isLaki ? `${warga?.tempat_lahir}, ${formatDate(warga?.tanggal_lahir)}` : `${data.pasangan?.tempatLahir}, ${formatDate(data.pasangan?.tanggalLahir)}`} />
-                    <FieldRow index="5" label="Kewarganegaraan" value={isLaki ? (warga?.kewarganegaraan === 'WNI' ? 'Indonesia' : warga?.kewarganegaraan) : data.pasangan?.kewarganegaraan} />
-                    <FieldRow index="6" label="Agama" value={isLaki ? warga?.agama : data.pasangan?.agama} />
-                    <FieldRow index="7" label="Pekerjaan" value={isLaki ? warga?.pekerjaan : data.pasangan?.pekerjaan} />
-                    <FieldRow index="8" label="Alamat" value={isLaki ? `${warga?.alamat} RT. ${warga?.rt} RW. ${warga?.rw} Desa ${warga?.desa} Kecamatan ${warga?.kecamatan} Kabupaten ${warga?.kabupaten}` : data.pasangan?.alamat} />
+                    <FieldRow index="3" label="Nomor Induk Kependudukan (NIK)" value={isLaki ? pemohon?.nik : data.pasangan?.nik} />
+                    <FieldRow index="4" label="Tempat dan tanggal Lahir" value={isLaki ? `${pemohon?.tempatLahir}, ${formatDate(pemohon?.tanggalLahir)}` : `${data.pasangan?.tempatLahir}, ${formatDate(data.pasangan?.tanggalLahir)}`} />
+                    <FieldRow index="5" label="Kewarganegaraan" value={isLaki ? (pemohon?.kewarganegaraan === 'WNI' ? 'Indonesia' : pemohon?.kewarganegaraan) : data.pasangan?.kewarganegaraan} />
+                    <FieldRow index="6" label="Agama" value={isLaki ? pemohon?.agama : data.pasangan?.agama} />
+                    <FieldRow index="7" label="Pekerjaan" value={isLaki ? pemohon?.pekerjaan : data.pasangan?.pekerjaan} />
+                    <FieldRow index="8" label="Alamat" value={isLaki ? pemohon?.alamat : data.pasangan?.alamat} />
                 </div>
 
                 <p className="font-bold mb-1">B. Calon Istri</p>
                 <div className="mb-4">
-                    <FieldRow index="1" label="Nama lengkap dan alias" value={!isLaki ? warga?.nama : data.pasangan?.nama} />
+                    <FieldRow index="1" label="Nama lengkap dan alias" value={!isLaki ? pemohon?.nama : data.pasangan?.nama} />
                     <FieldRow index="2" label="Binti" value={!isLaki ? data.ayah?.nama : data.pasangan?.binBinti} />
-                    <FieldRow index="3" label="Nomor Induk Kependudukan (NIK)" value={!isLaki ? warga?.nik : data.pasangan?.nik} />
-                    <FieldRow index="4" label="Tempat dan tanggal Lahir" value={!isLaki ? `${warga?.tempat_lahir}, ${formatDate(warga?.tanggal_lahir)}` : `${data.pasangan?.tempatLahir}, ${formatDate(data.pasangan?.tanggalLahir)}`} />
-                    <FieldRow index="5" label="Kewarganegaraan" value={!isLaki ? (warga?.kewarganegaraan === 'WNI' ? 'Indonesia' : warga?.kewarganegaraan) : data.pasangan?.kewarganegaraan} />
-                    <FieldRow index="6" label="Agama" value={!isLaki ? warga?.agama : data.pasangan?.agama} />
-                    <FieldRow index="7" label="Pekerjaan" value={!isLaki ? warga?.pekerjaan : data.pasangan?.pekerjaan} />
-                    <FieldRow index="8" label="Alamat" value={!isLaki ? `${warga?.alamat} RT. ${warga?.rt} RW. ${warga?.rw} Desa ${warga?.desa} Kecamatan ${warga?.kecamatan} Kabupaten ${warga?.kabupaten}` : data.pasangan?.alamat} />
+                    <FieldRow index="3" label="Nomor Induk Kependudukan (NIK)" value={!isLaki ? pemohon?.nik : data.pasangan?.nik} />
+                    <FieldRow index="4" label="Tempat dan tanggal Lahir" value={!isLaki ? `${pemohon?.tempatLahir}, ${formatDate(pemohon?.tanggalLahir)}` : `${data.pasangan?.tempatLahir}, ${formatDate(data.pasangan?.tanggalLahir)}`} />
+                    <FieldRow index="5" label="Kewarganegaraan" value={!isLaki ? (pemohon?.kewarganegaraan === 'WNI' ? 'Indonesia' : pemohon?.kewarganegaraan) : data.pasangan?.kewarganegaraan} />
+                    <FieldRow index="6" label="Agama" value={!isLaki ? pemohon?.agama : data.pasangan?.agama} />
+                    <FieldRow index="7" label="Pekerjaan" value={!isLaki ? pemohon?.pekerjaan : data.pasangan?.pekerjaan} />
+                    <FieldRow index="8" label="Alamat" value={!isLaki ? pemohon?.alamat : data.pasangan?.alamat} />
                 </div>
 
                 <p className="mb-6 leading-relaxed">Menyatakan dengan sesungguhnya bahwa atas dasar suka rela, dengan kesadaran sendiri, tanpa ada paksaan dari siapapun juga, setuju untuk melangsungkan pernikahan.</p>
@@ -296,13 +297,13 @@ export default function SuratNAPrint() {
                         <p>&nbsp;</p>
                         <p>Calon Suami</p>
                         <div className="h-24"></div>
-                        <p className="font-bold underline">{isLaki ? warga?.nama : data.pasangan?.nama}</p>
+                        <p className="font-bold underline">{isLaki ? pemohon?.nama : data.pasangan?.nama}</p>
                     </div>
                     <div className="w-[200px]">
                         <p>{pengaturan.nama_desa}, {formatDate(data.tanggalSurat)}</p>
                         <p>Calon Istri</p>
                         <div className="h-24"></div>
-                        <p className="font-bold underline">{!isLaki ? warga?.nama : data.pasangan?.nama}</p>
+                        <p className="font-bold underline">{!isLaki ? pemohon?.nama : data.pasangan?.nama}</p>
                     </div>
                 </div>
             </div>
@@ -346,14 +347,14 @@ export default function SuratNAPrint() {
                     <p className="mb-2">Yang bersangkutan adalah suami/istri*) dari :</p>
 
                     <div className="flex mb-4"><span className="w-5">B.</span><div className="flex-1">
-                        <FieldRow index="1" label="Nama lengkap dan alias" value={warga?.nama} />
+                        <FieldRow index="1" label="Nama lengkap dan alias" value={pemohon?.nama} />
                         <FieldRow index="2" label={isLaki ? "Bin" : "Binti"} value={data.ayah?.nama} />
-                        <FieldRow index="3" label="Nomor Induk Kependudukan (NIK)" value={warga?.nik} />
-                        <FieldRow index="4" label="Tempat dan tanggal Lahir" value={`${warga?.tempat_lahir}, ${formatDate(warga?.tanggal_lahir)}`} />
-                        <FieldRow index="5" label="Kewarganegaraan" value={warga?.kewarganegaraan === 'WNI' ? 'Indonesia' : warga?.kewarganegaraan} />
-                        <FieldRow index="6" label="Agama" value={warga?.agama} />
-                        <FieldRow index="7" label="Pekerjaan" value={warga?.pekerjaan} />
-                        <FieldRow index="8" label="Alamat" value={`${warga?.alamat} RT. ${warga?.rt} RW. ${warga?.rw} Desa ${warga?.desa} Kecamatan ${warga?.kecamatan} Kabupaten ${warga?.kabupaten}`} />
+                        <FieldRow index="3" label="Nomor Induk Kependudukan (NIK)" value={pemohon?.nik} />
+                        <FieldRow index="4" label="Tempat dan tanggal Lahir" value={`${pemohon?.tempatLahir}, ${formatDate(pemohon?.tanggalLahir)}`} />
+                        <FieldRow index="5" label="Kewarganegaraan" value={pemohon?.kewarganegaraan === 'WNI' ? 'Indonesia' : pemohon?.kewarganegaraan} />
+                        <FieldRow index="6" label="Agama" value={pemohon?.agama} />
+                        <FieldRow index="7" label="Pekerjaan" value={pemohon?.pekerjaan} />
+                        <FieldRow index="8" label="Alamat" value={pemohon?.alamat} />
                     </div></div>
 
                     <p className="mb-12">Demikian surat keterangan ini dibuat dengan mengingat sumpah jabatan dan untuk digunakan seperlunya.</p>

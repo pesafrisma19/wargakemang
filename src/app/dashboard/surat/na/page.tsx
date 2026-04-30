@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Warga, Pengaturan, Penandatangan } from '@/types/database'
 import WargaSearchSelect from '@/components/WargaSearchSelect'
-import { ArrowLeft, Save, Check, AlertCircle, Search, Eye } from 'lucide-react'
+import { ArrowLeft, Save, Check, AlertCircle, Search, Eye, UserPlus, Download } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+
+type InputMode = 'search' | 'manual'
 
 export default function SuratNAPage() {
     const supabase = createClient()
@@ -18,15 +20,26 @@ export default function SuratNAPage() {
     const [generating, setGenerating] = useState(false)
     const [savedId, setSavedId] = useState<number | null>(null)
     const [error, setError] = useState('')
+    const [inputMode, setInputMode] = useState<InputMode>('search')
 
     // Basic fields
     const [nomorSurat, setNomorSurat] = useState('')
     const [penandatangan, setPenandatangan] = useState<Penandatangan>('kades')
     const [tanggalSurat, setTanggalSurat] = useState(new Date().toISOString().split('T')[0])
     
-    // Status Pernikahan (Auto-detected)
-    const [statusPernikahan, setStatusPernikahan] = useState('')
-    const [jenisKelamin, setJenisKelamin] = useState('')
+    // Status Pernikahan & Kelamin
+    const [statusPernikahan, setStatusPernikahan] = useState('Jejaka') // default
+    const [jenisKelamin, setJenisKelamin] = useState('L') // default L
+
+    // Pemohon (Warga) fields - for manual input or prefill
+    const [pemohonNama, setPemohonNama] = useState('')
+    const [pemohonNik, setPemohonNik] = useState('')
+    const [pemohonTempatLahir, setPemohonTempatLahir] = useState('')
+    const [pemohonTanggalLahir, setPemohonTanggalLahir] = useState('')
+    const [pemohonKewarganegaraan, setPemohonKewarganegaraan] = useState('Indonesia')
+    const [pemohonAgama, setPemohonAgama] = useState('Islam')
+    const [pemohonPekerjaan, setPemohonPekerjaan] = useState('')
+    const [pemohonAlamat, setPemohonAlamat] = useState('')
 
     // Data Pasangan
     const [pasanganNama, setPasanganNama] = useState('')
@@ -119,10 +132,27 @@ export default function SuratNAPage() {
         }
     }
 
+    const handleSwitchMode = (mode: InputMode) => {
+        setInputMode(mode)
+        if (mode === 'manual') {
+            setSelectedWarga(null)
+        }
+    }
+
     const handleWargaSelect = async (warga: Warga) => {
         setSelectedWarga(warga)
         setJenisKelamin(warga.jenis_kelamin)
         
+        // Prefill Pemohon
+        setPemohonNama(warga.nama)
+        setPemohonNik(warga.nik)
+        setPemohonTempatLahir(warga.tempat_lahir)
+        setPemohonTanggalLahir(warga.tanggal_lahir)
+        setPemohonKewarganegaraan(warga.kewarganegaraan === 'WNI' ? 'Indonesia' : (warga.kewarganegaraan || 'Indonesia'))
+        setPemohonAgama(warga.agama)
+        setPemohonPekerjaan(warga.pekerjaan)
+        setPemohonAlamat(`${warga.alamat} RT. ${warga.rt} RW. ${warga.rw} Desa ${warga.desa} Kec. ${warga.kecamatan} Kab. ${warga.kabupaten}`)
+
         // Smart Gender & Status Logic
         let status = 'Jejaka/Perawan'
         if (warga.jenis_kelamin === 'L') {
@@ -141,7 +171,7 @@ export default function SuratNAPage() {
             setCetakN6(false)
         }
 
-        // Prefill names
+        // Prefill parent names
         setAyahNama(warga.nama_ayah || '')
         setIbuNama(warga.nama_ibu || '')
 
@@ -153,7 +183,8 @@ export default function SuratNAPage() {
 
     const validateForm = (): boolean => {
         if (!pengaturan) { setError('Pengaturan desa belum diisi.'); return false }
-        if (!selectedWarga) { setError('Warga (Pemohon) belum dipilih.'); return false }
+        if (inputMode === 'search' && !selectedWarga) { setError('Warga (Pemohon) belum dipilih.'); return false }
+        if (inputMode === 'manual' && (!pemohonNama || !pemohonNik)) { setError('Nama dan NIK Pemohon wajib diisi.'); return false }
         if (!pasanganNama || !ayahNama || !ibuNama) { setError('Nama pasangan, ayah, dan ibu wajib diisi.'); return false }
         if (cetakN6 && (!mantanNama || !mantanTglMeninggal)) { setError('Data mantan yang meninggal wajib diisi untuk cetak N6.'); return false }
         setError(''); return true
@@ -164,6 +195,12 @@ export default function SuratNAPage() {
             nomorSurat,
             statusPernikahan,
             cetakN6,
+            jenisKelamin,
+            pemohon: {
+                nama: pemohonNama, nik: pemohonNik, tempatLahir: pemohonTempatLahir, 
+                tanggalLahir: pemohonTanggalLahir, agama: pemohonAgama, pekerjaan: pemohonPekerjaan, 
+                alamat: pemohonAlamat, kewarganegaraan: pemohonKewarganegaraan
+            },
             pasangan: {
                 nama: pasanganNama, binBinti: pasanganBinBinti, nik: pasanganNik, 
                 tempatLahir: pasanganTempatLahir, tanggalLahir: pasanganTanggalLahir, 
@@ -199,8 +236,8 @@ export default function SuratNAPage() {
                 nomor_surat: nomorSurat, 
                 jenis_surat: 'na',
                 warga_id: selectedWarga?.id || null,
-                warga_nama: selectedWarga?.nama || '', 
-                warga_nik: selectedWarga?.nik || '',
+                warga_nama: pemohonNama, 
+                warga_nik: pemohonNik,
                 data_surat: buildData(), 
                 dibuat_oleh: user?.id,
             }).select().single()
@@ -229,6 +266,7 @@ export default function SuratNAPage() {
     }
 
     const inputCls = "w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 text-gray-800"
+    const showDataForm = inputMode === 'manual' || selectedWarga || pemohonNama
 
     return (
         <div className="space-y-6 pb-20 max-w-4xl mx-auto">
@@ -252,9 +290,6 @@ export default function SuratNAPage() {
                         <Check size={18} />
                         <span className="text-sm font-medium">Surat berhasil disimpan ke arsip!</span>
                     </div>
-                    <button onClick={handlePrint} className="px-4 py-1.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
-                        Cetak Sekarang
-                    </button>
                 </div>
             )}
             
@@ -266,12 +301,26 @@ export default function SuratNAPage() {
                     <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Nomor Surat (N1)</h2>
                     <input type="text" value={nomorSurat} onChange={(e) => setNomorSurat(e.target.value)} className={`${inputCls} font-mono sm:max-w-xs`} />
                 </div>
+                
                 <div>
-                    <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Pilih Pemohon (Warga)</h2>
-                    <WargaSearchSelect onSelect={handleWargaSelect} selectedWarga={selectedWarga} onClear={() => setSelectedWarga(null)} />
+                    <div className="flex items-center justify-between mb-3">
+                        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Data Pemohon (Warga)</h2>
+                        <div className="flex bg-gray-100 rounded-lg p-0.5">
+                            <button onClick={() => handleSwitchMode('search')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${inputMode === 'search' ? 'bg-white text-rose-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                                <Search size={14} /> Cari Database
+                            </button>
+                            <button onClick={() => handleSwitchMode('manual')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${inputMode === 'manual' ? 'bg-white text-rose-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                                <UserPlus size={14} /> Input Manual
+                            </button>
+                        </div>
+                    </div>
+                    {inputMode === 'search' && (<WargaSearchSelect onSelect={handleWargaSelect} selectedWarga={selectedWarga} onClear={() => setSelectedWarga(null)} />)}
+                    {inputMode === 'manual' && !selectedWarga && (<p className="text-sm text-gray-500 bg-rose-50 px-3 py-2 rounded-lg">💡 Mode input manual — isi data secara lengkap di bawah.</p>)}
                 </div>
                 
-                {selectedWarga && (
+                {inputMode === 'search' && selectedWarga && (
                     <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3">
                         <div className="p-2 bg-white rounded-lg shadow-sm text-rose-500"><Eye size={20}/></div>
                         <div>
@@ -283,8 +332,41 @@ export default function SuratNAPage() {
                 )}
             </div>
 
-            {selectedWarga && (
+            {showDataForm && (
                 <>
+                    {/* Data Pemohon (Editable) */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-gray-700 to-gray-800">
+                            <h2 className="text-white font-semibold">Data Pemohon</h2>
+                            <p className="text-gray-300 text-sm">{inputMode === 'search' ? 'Data otomatis terisi, bisa diedit jika perlu' : 'Isi data pemohon secara manual'}</p>
+                        </div>
+                        <div className="p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div><label className="block text-sm font-medium text-gray-600 mb-1">Nama Lengkap</label><input type="text" value={pemohonNama} onChange={(e) => setPemohonNama(e.target.value)} className={inputCls} /></div>
+                            <div><label className="block text-sm font-medium text-gray-600 mb-1">NIK</label><input type="text" value={pemohonNik} onChange={(e) => setPemohonNik(e.target.value)} className={inputCls} /></div>
+                            <div><label className="block text-sm font-medium text-gray-600 mb-1">Kewarganegaraan</label><input type="text" value={pemohonKewarganegaraan} onChange={(e) => setPemohonKewarganegaraan(e.target.value)} className={inputCls} /></div>
+                            <div><label className="block text-sm font-medium text-gray-600 mb-1">Tempat Lahir</label><input type="text" value={pemohonTempatLahir} onChange={(e) => setPemohonTempatLahir(e.target.value)} className={inputCls} /></div>
+                            <div><label className="block text-sm font-medium text-gray-600 mb-1">Tanggal Lahir</label><input type="date" value={pemohonTanggalLahir} onChange={(e) => setPemohonTanggalLahir(e.target.value)} className={inputCls} /></div>
+                            <div><label className="block text-sm font-medium text-gray-600 mb-1">Agama</label><input type="text" value={pemohonAgama} onChange={(e) => setPemohonAgama(e.target.value)} className={inputCls} /></div>
+                            <div><label className="block text-sm font-medium text-gray-600 mb-1">Pekerjaan</label><input type="text" value={pemohonPekerjaan} onChange={(e) => setPemohonPekerjaan(e.target.value)} className={inputCls} /></div>
+                            
+                            {inputMode === 'manual' && (
+                                <>
+                                    <div><label className="block text-sm font-medium text-gray-600 mb-1">Jenis Kelamin</label>
+                                        <select value={jenisKelamin} onChange={(e) => setJenisKelamin(e.target.value)} className={`${inputCls} bg-white`}>
+                                            <option value="L">Laki-laki</option>
+                                            <option value="P">Perempuan</option>
+                                        </select>
+                                    </div>
+                                    <div><label className="block text-sm font-medium text-gray-600 mb-1">Status Pernikahan (Di Surat)</label>
+                                        <input type="text" value={statusPernikahan} onChange={(e) => setStatusPernikahan(e.target.value)} placeholder="Contoh: Jejaka / Perawan / Duda / Janda" className={inputCls} />
+                                    </div>
+                                </>
+                            )}
+                            
+                            <div className="sm:col-span-2"><label className="block text-sm font-medium text-gray-600 mb-1">Alamat Lengkap</label><textarea value={pemohonAlamat} onChange={(e) => setPemohonAlamat(e.target.value)} rows={2} className={`${inputCls} resize-none`} /></div>
+                        </div>
+                    </div>
+
                     {/* Data Calon Pasangan */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="px-5 sm:px-6 py-4 bg-gradient-to-r from-rose-500 to-pink-600">
@@ -392,11 +474,19 @@ export default function SuratNAPage() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <button onClick={handleSimpan} disabled={generating}
-                            className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-rose-500/30 transition-all disabled:opacity-50">
+                            className="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-emerald-500/30 transition-all disabled:opacity-50">
                             {generating ? <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" /> : <Save size={20} />}
-                            Simpan Arsip & Lanjut Cetak
+                            Simpan Arsip
+                        </button>
+                        <button onClick={handlePrint} disabled={!savedId}
+                            className={`inline-flex items-center justify-center gap-2 px-5 py-3.5 font-medium rounded-xl transition-all ${savedId ? 'bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:shadow-lg hover:shadow-rose-500/30' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
+                            <Eye size={20} /> Cetak (N1, N2, N4, N6)
+                        </button>
+                        <button disabled={true}
+                            className="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-white border-2 border-gray-200 text-gray-400 font-medium rounded-xl cursor-not-allowed">
+                            <Download size={20} /> PDF via Print
                         </button>
                     </div>
                 </>
