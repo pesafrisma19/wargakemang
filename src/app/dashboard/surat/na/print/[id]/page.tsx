@@ -91,7 +91,7 @@ export default function SuratNAPrint() {
     const namaKades = pengaturan.nama_kades?.toUpperCase() || ''
 
     return (
-        <div className="bg-gray-100 min-h-screen py-8 print:py-0 print:bg-white font-serif text-[14px] leading-snug text-black">
+        <div className="bg-gray-100 min-h-screen py-8 print:py-0 print:bg-white font-serif text-[13px] leading-[18px] text-black">
             <style jsx global>{`
                 @media print {
                     @page { size: 215mm 330mm; margin: 1cm 1cm 1cm 1.5cm; }
