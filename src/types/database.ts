@@ -155,7 +155,7 @@ export const DEFAULT_PROVINSI = 'JAWA BARAT';
 // Surat & Pengaturan Types
 // =====================================================
 
-export type JenisSurat = 'domisili' | 'kematian' | 'kelahiran' | 'sku' | 'sktm' | 'beda-data';
+export type JenisSurat = 'domisili' | 'kematian' | 'kelahiran' | 'sku' | 'sktm' | 'beda-data' | 'na';
 
 export const JENIS_SURAT_LABELS: Record<JenisSurat, string> = {
   'domisili': 'Surat Keterangan Domisili',
@@ -164,6 +164,7 @@ export const JENIS_SURAT_LABELS: Record<JenisSurat, string> = {
   'sku': 'Surat Keterangan Usaha',
   'sktm': 'Surat Keterangan Tidak Mampu',
   'beda-data': 'Surat Keterangan Beda Data',
+  'na': 'Surat Keterangan Nikah (NA)',
 };
 
 export interface Pengaturan {

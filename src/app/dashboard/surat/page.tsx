@@ -59,6 +59,18 @@ const SURAT_TYPES = [
         available: false,
     },
     {
+        jenis: 'na' as const,
+        label: 'Surat Ket. Nikah (NA)',
+        desc: 'Menerangkan pengantar nikah (N1-N6)',
+        icon: '💍',
+        gradient: 'from-rose-500 to-pink-600',
+        bgLight: 'bg-rose-50',
+        borderHover: 'hover:border-rose-300',
+        textHover: 'group-hover:text-rose-700',
+        badgeBg: 'bg-rose-100 text-rose-700',
+        available: true,
+    },
+    {
         jenis: 'sktm' as const,
         label: 'Surat Ket. Tidak Mampu',
         desc: 'Menerangkan kondisi ekonomi warga',
@@ -85,7 +97,7 @@ const SURAT_TYPES = [
 ]
 
 const ICON_MAP: Record<string, string> = {
-    domisili: '📍', kelahiran: '👶', sku: '🏪', kematian: '🕯️', sktm: '💰', 'beda-data': '📋',
+    domisili: '📍', kelahiran: '👶', sku: '🏪', kematian: '🕯️', sktm: '💰', 'beda-data': '📋', na: '💍'
 }
 
 export default function SuratPage() {
@@ -164,6 +176,12 @@ export default function SuratPage() {
         if (!pengaturan) return
         setRegenerating(surat.id)
         try {
+            if (surat.jenis_surat === 'na') {
+                window.open(`/dashboard/surat/na/print/${surat.id}`, '_blank')
+                setRegenerating(null)
+                return
+            }
+
             let doc
             const d = surat.data_surat as any
             if (surat.jenis_surat === 'domisili') {
