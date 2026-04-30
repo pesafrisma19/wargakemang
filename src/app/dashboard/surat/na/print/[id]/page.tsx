@@ -78,11 +78,11 @@ export default function SuratNAPrint() {
 
     const FieldRow = ({ label, value, index, nested = false }: { label: string, value: string, index?: string, nested?: boolean }) => (
         <div className={`flex ${nested ? 'ml-4' : ''} mb-1`}>
-            <div className="w-[180px] flex">
-                {index && <span className="w-5">{index}.</span>}
+            <div className="w-[220px] flex shrink-0">
+                {index && <span className="w-6 shrink-0">{index}.</span>}
                 <span className="flex-1">{label}</span>
             </div>
-            <div className="w-4">:</div>
+            <div className="w-4 shrink-0">:</div>
             <div className="flex-1 font-bold">{value || '-'}</div>
         </div>
     )
