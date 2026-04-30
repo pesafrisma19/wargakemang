@@ -239,7 +239,7 @@ export default function KeluargaPage() {
                                                     </div>
                                                     <div className="min-w-0">
                                                         <p className="font-medium text-gray-800 truncate">{anggota.nama}</p>
-                                                        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
+                                                        <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-gray-500 mt-1">
                                                             <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${anggota.hubungan_keluarga === 'KEPALA KELUARGA'
                                                                 ? 'bg-emerald-100 text-emerald-700'
                                                                 : anggota.hubungan_keluarga === 'ISTRI'
@@ -250,8 +250,30 @@ export default function KeluargaPage() {
                                                                 }`}>
                                                                 {anggota.hubungan_keluarga}
                                                             </span>
-                                                            <span className="hidden sm:inline">•</span>
+                                                            <span className="hidden sm:inline text-gray-300">•</span>
                                                             <span className="hidden sm:inline">{anggota.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'}</span>
+                                                            
+                                                            {/* Status Badge */}
+                                                            {anggota.status_warga && anggota.status_warga !== 'AKTIF' && (
+                                                                <>
+                                                                    <span className="hidden sm:inline text-gray-300">•</span>
+                                                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                                                        anggota.status_warga === 'PINDAH' 
+                                                                            ? 'bg-amber-100 text-amber-700 border border-amber-200' 
+                                                                            : 'bg-red-100 text-red-700 border border-red-200'
+                                                                    }`}>
+                                                                        {anggota.status_warga === 'MENINGGAL' ? 'WAFAT' : anggota.status_warga}
+                                                                    </span>
+                                                                </>
+                                                            )}
+                                                            {anggota.status_warga === 'AKTIF' && (
+                                                                <>
+                                                                    <span className="hidden sm:inline text-gray-300">•</span>
+                                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                                                                        AKTIF
+                                                                    </span>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>

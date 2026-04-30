@@ -293,12 +293,23 @@ export default function WargaPage() {
                                 <h3 className="font-semibold text-gray-800 truncate">{w.nama}</h3>
                                 <p className="text-sm text-gray-500 font-mono mt-0.5">{w.nik}</p>
                             </div>
-                            <span className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${w.jenis_kelamin === 'L'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-pink-100 text-pink-800'
-                                }`}>
-                                {w.jenis_kelamin === 'L' ? 'L' : 'P'}
-                            </span>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                                {w.status_warga === 'AKTIF' && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">AKTIF</span>
+                                )}
+                                {w.status_warga === 'PINDAH' && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">PINDAH</span>
+                                )}
+                                {w.status_warga === 'MENINGGAL' && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700">WAFAT</span>
+                                )}
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${w.jenis_kelamin === 'L'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : 'bg-pink-100 text-pink-800'
+                                    }`}>
+                                    {w.jenis_kelamin === 'L' ? 'L' : 'P'}
+                                </span>
+                            </div>
                         </div>
 
                         <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
@@ -396,6 +407,7 @@ export default function WargaPage() {
                                 <th className="px-4 py-3">L/P</th>
                                 <th className="px-4 py-3">Alamat</th>
                                 <th className="px-4 py-3 text-center">RT/RW</th>
+                                <th className="px-4 py-3 text-center">Status</th>
                                 <th className="px-4 py-3 text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -419,6 +431,23 @@ export default function WargaPage() {
                                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                                                 {w.rt}/{w.rw}
                                             </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            {w.status_warga === 'AKTIF' && (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                                                    AKTIF
+                                                </span>
+                                            )}
+                                            {w.status_warga === 'PINDAH' && (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200">
+                                                    PINDAH
+                                                </span>
+                                            )}
+                                            {w.status_warga === 'MENINGGAL' && (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200">
+                                                    WAFAT
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center justify-end gap-1">
@@ -452,7 +481,7 @@ export default function WargaPage() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
+                                    <td colSpan={8} className="px-4 py-12 text-center text-gray-500">
                                         Tidak ada data warga ditemukan
                                     </td>
                                 </tr>
