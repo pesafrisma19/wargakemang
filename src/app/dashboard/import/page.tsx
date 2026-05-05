@@ -26,6 +26,10 @@ interface ImportRow {
     kewarganegaraan?: string
     no_kk?: string
     no_wa?: string
+    hubungan_keluarga?: string
+    pendidikan?: string
+    nama_ayah?: string
+    nama_ibu?: string
 }
 
 export default function ImportPage() {
@@ -72,6 +76,26 @@ export default function ImportPage() {
                         newErrors.push(`Baris ${rowNum}: NIK harus 16 digit`)
                         return
                     }
+                    if (!row.tempat_lahir) {
+                        newErrors.push(`Baris ${rowNum}: Tempat Lahir kosong`)
+                        return
+                    }
+                    if (!row.tanggal_lahir) {
+                        newErrors.push(`Baris ${rowNum}: Tanggal Lahir kosong`)
+                        return
+                    }
+                    if (!row.alamat) {
+                        newErrors.push(`Baris ${rowNum}: Alamat kosong`)
+                        return
+                    }
+                    if (!row.rt || !row.rw) {
+                        newErrors.push(`Baris ${rowNum}: RT/RW kosong`)
+                        return
+                    }
+                    if (!row.pekerjaan) {
+                        newErrors.push(`Baris ${rowNum}: Pekerjaan kosong`)
+                        return
+                    }
 
                     validData.push({
                         nik: String(row.nik),
@@ -91,7 +115,14 @@ export default function ImportPage() {
                         kewarganegaraan: String(row.kewarganegaraan || 'WNI'),
                         no_kk: row.no_kk ? String(row.no_kk) : null,
                         no_wa: row.no_wa ? String(row.no_wa) : null,
-                    } as ImportRow)
+                        hubungan_keluarga: String(row.hubungan_keluarga || 'LAINNYA').toUpperCase(),
+                        pendidikan: String(row.pendidikan || '-').toUpperCase(),
+                        nama_ayah: String(row.nama_ayah || '-').toUpperCase(),
+                        nama_ibu: String(row.nama_ibu || '-').toUpperCase(),
+                        status_warga: 'AKTIF',
+                        disabilitas: 'Tidak Ada',
+                        catatan: '',
+                    } as any)
                 })
 
                 setPreviewData(validData)
@@ -159,6 +190,10 @@ export default function ImportPage() {
                 kewarganegaraan: 'WNI',
                 no_kk: '3214123456789000',
                 no_wa: '08123456789',
+                hubungan_keluarga: 'KEPALA KELUARGA',
+                pendidikan: 'SMA',
+                nama_ayah: 'Fulan',
+                nama_ibu: 'Fulanah',
             },
         ]
 
