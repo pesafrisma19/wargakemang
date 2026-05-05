@@ -139,11 +139,21 @@ export default function ImportPage() {
             const date = new Date((dateValue - 25569) * 86400 * 1000)
             return date.toISOString().split('T')[0]
         }
-        const date = new Date(dateValue)
+
+        const strValue = String(dateValue).trim()
+
+        // Handle format DD/MM/YYYY or DD-MM-YYYY
+        const dmyMatch = strValue.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/)
+        if (dmyMatch) {
+            const [, day, month, year] = dmyMatch
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+        }
+
+        const date = new Date(strValue)
         if (!isNaN(date.getTime())) {
             return date.toISOString().split('T')[0]
         }
-        return dateValue
+        return strValue
     }
 
     const handleImport = async () => {
