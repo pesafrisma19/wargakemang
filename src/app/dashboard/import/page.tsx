@@ -160,24 +160,60 @@ export default function ImportPage() {
         if (previewData.length === 0) return
 
         setLoading(true)
+        setErrors([])
 
-        const dataToInsert = previewData.map(row => ({
-            ...row,
-            desa: row.desa || DEFAULT_DESA,
-            kecamatan: row.kecamatan || DEFAULT_KECAMATAN,
-            kabupaten: 'CIANJUR',
-            provinsi: 'JAWA BARAT',
-        }))
+        try {
+            // 1. Kumpulkan semua NIK dari Excel
+            const nikList = previewData.map(row => row.nik)
 
-        const { error } = await supabase.from('warga').insert(dataToInsert)
+            // 2. Cek NIK yang sudah ada di database
+            const { data: existingWarga, error: fetchError } = await supabase
+                .from('warga')
+                .select('nik')
+                .in('nik', nikList)
 
-        if (error) {
-            setErrors([`Gagal mengimpor data: ${error.message}`])
+            if (fetchError) throw new Error('Gagal mengecek NIK yang sudah ada: ' + fetchError.message)
+
+            const existingNiks = new Set(existingWarga?.map(w => w.nik) || [])
+
+            // 3. Pisahkan data baru dan data yang sudah ada
+            const newDataToInsert = previewData.filter(row => !existingNiks.has(row.nik))
+
+            if (newDataToInsert.length === 0) {
+                setErrors(['Semua NIK dalam file Excel ini sudah terdaftar di database. Tidak ada data baru yang ditambahkan.'])
+                setLoading(false)
+                return
+            }
+
+            // Jika ada data yang di-skip, kita bisa memberitahu user (opsional)
+            const skippedCount = previewData.length - newDataToInsert.length
+
+            // 4. Siapkan data baru untuk di-insert
+            const dataToInsert = newDataToInsert.map(row => ({
+                ...row,
+                desa: row.desa || DEFAULT_DESA,
+                kecamatan: row.kecamatan || DEFAULT_KECAMATAN,
+                kabupaten: 'CIANJUR',
+                provinsi: 'JAWA BARAT',
+            }))
+
+            // 5. Insert ke database (ini tidak akan menimpa data)
+            const { error } = await supabase.from('warga').insert(dataToInsert)
+
+            if (error) {
+                throw new Error(error.message)
+            }
+
+            if (skippedCount > 0) {
+                // Tampilkan pesan sukses sebagian jika diperlukan, tapi router.push akan pindah halaman
+                // Bisa menggunakan toast, tapi untuk saat ini langsung redirect
+            }
+
+            router.push('/dashboard/warga')
+        } catch (err: any) {
+            setErrors([`Gagal mengimpor data: ${err.message}`])
             setLoading(false)
-            return
         }
-
-        router.push('/dashboard/warga')
     }
 
     const downloadTemplate = () => {
