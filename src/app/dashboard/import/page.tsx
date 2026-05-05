@@ -263,7 +263,13 @@ export default function ImportPage() {
                 return
             }
 
-            const ws = XLSX.utils.json_to_sheet(data)
+            // Hapus field foto (yang mungkin berisi base64 string sangat panjang) agar tidak error di Excel
+            const cleanData = data.map(item => {
+                const { foto_ktp, foto_kk, ...rest } = item
+                return rest
+            })
+
+            const ws = XLSX.utils.json_to_sheet(cleanData)
             const wb = XLSX.utils.book_new()
             XLSX.utils.book_append_sheet(wb, ws, 'Backup_Warga')
             
