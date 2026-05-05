@@ -257,6 +257,9 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                     nama_ayah: formData.nama_ayah,
                     nama_ibu: formData.nama_ibu,
                     pendidikan: formData.pendidikan,
+                    status_warga: formData.status_warga || 'AKTIF',
+                    disabilitas: formData.disabilitas || 'Tidak Ada',
+                    catatan: formData.catatan || '',
                     updated_at: new Date().toISOString(),
                 })
                 .eq('id', resolvedParams.id)
@@ -727,7 +730,46 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                             />
                         </div>
 
+                        {/* Status Warga */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Status Warga</label>
+                            <select
+                                name="status_warga"
+                                value={formData.status_warga || 'AKTIF'}
+                                onChange={handleChange}
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                            >
+                                <option value="AKTIF">AKTIF</option>
+                                <option value="MENINGGAL">MENINGGAL</option>
+                                <option value="PINDAH">PINDAH</option>
+                            </select>
+                        </div>
 
+                        {/* Disabilitas */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Disabilitas</label>
+                            <input
+                                type="text"
+                                name="disabilitas"
+                                value={formData.disabilitas || ''}
+                                onChange={handleChange}
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                placeholder="Contoh: Tidak Ada / Tunanetra"
+                            />
+                        </div>
+
+                        {/* Catatan */}
+                        <div className="sm:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Catatan Tambahan</label>
+                            <textarea
+                                name="catatan"
+                                value={formData.catatan || ''}
+                                onChange={handleChange}
+                                rows={2}
+                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white resize-none"
+                                placeholder="Catatan tambahan mengenai warga ini (opsional)"
+                            />
+                        </div>
                     </div>
                 </div>
 
