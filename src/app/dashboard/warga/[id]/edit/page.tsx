@@ -748,14 +748,20 @@ export default function EditWargaPage({ params }: { params: Promise<{ id: string
                         {/* Disabilitas */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Disabilitas</label>
-                            <input
-                                type="text"
+                            <select
                                 name="disabilitas"
-                                value={formData.disabilitas || ''}
+                                value={formData.disabilitas || 'Tidak Ada'}
                                 onChange={handleChange}
                                 className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                                placeholder="Contoh: Tidak Ada / Tunanetra"
-                            />
+                            >
+                                <option value="Tidak Ada">Tidak Ada</option>
+                                <option value="Cacat Fisik">Cacat Fisik</option>
+                                <option value="Cacat Netra/Buta">Cacat Netra/Buta</option>
+                                <option value="Cacat Rungu/Wicara">Cacat Rungu/Wicara</option>
+                                <option value="Cacat Mental/Jiwa">Cacat Mental/Jiwa</option>
+                                <option value="Cacat Fisik dan Mental">Cacat Fisik dan Mental</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
                         </div>
 
                         {/* Catatan */}
