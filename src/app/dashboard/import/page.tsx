@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Upload, FileSpreadsheet, Check, AlertCircle, ArrowLeft } from 'lucide-react'
+import { Upload, FileSpreadsheet, Check, AlertCircle, ArrowLeft, Download } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import Link from 'next/link'
 import { DEFAULT_DESA, DEFAULT_KECAMATAN } from '@/types/database'
@@ -249,6 +249,33 @@ export default function ImportPage() {
         XLSX.writeFile(wb, 'template_import_warga.xlsx')
     }
 
+    const backupData = async () => {
+        try {
+            setLoading(true)
+            setErrors([])
+            const { data, error } = await supabase.from('warga').select('*').order('rt', { ascending: true })
+            
+            if (error) throw error
+
+            if (!data || data.length === 0) {
+                setErrors(['Tidak ada data untuk dibackup.'])
+                setLoading(false)
+                return
+            }
+
+            const ws = XLSX.utils.json_to_sheet(data)
+            const wb = XLSX.utils.book_new()
+            XLSX.utils.book_append_sheet(wb, ws, 'Backup_Warga')
+            
+            const dateStr = new Date().toISOString().split('T')[0]
+            XLSX.writeFile(wb, `Backup_Data_Warga_${dateStr}.xlsx`)
+            setLoading(false)
+        } catch (err: any) {
+            setErrors([`Gagal melakukan backup: ${err.message}`])
+            setLoading(false)
+        }
+    }
+
     return (
         <div className="space-y-4 sm:space-y-6 pb-20">
             {/* Header */}
@@ -274,15 +301,25 @@ export default function ImportPage() {
                     <div className="flex-1">
                         <h3 className="font-semibold text-blue-800">Template Excel</h3>
                         <p className="text-blue-700 text-sm mt-1">
-                            Download template untuk format data yang benar.
+                            Sangat disarankan untuk melakukan backup (Export) semua data sebelum melakukan Import massal.
                         </p>
-                        <button
-                            onClick={downloadTemplate}
-                            className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                        >
-                            <FileSpreadsheet size={16} />
-                            Download Template
-                        </button>
+                        <div className="flex flex-wrap gap-2 mt-3">
+                            <button
+                                onClick={backupData}
+                                disabled={loading}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors text-sm disabled:opacity-50"
+                            >
+                                <Download size={16} />
+                                {loading ? 'Memproses...' : 'Backup Semua Data'}
+                            </button>
+                            <button
+                                onClick={downloadTemplate}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                            >
+                                <FileSpreadsheet size={16} />
+                                Download Template Kosong
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
