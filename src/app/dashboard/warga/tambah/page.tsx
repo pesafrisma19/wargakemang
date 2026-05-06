@@ -188,7 +188,7 @@ export default function TambahWargaPage() {
                                 status_kawin: existingWarga.status_kawin,
                                 pekerjaan: existingWarga.pekerjaan,
                                 kewarganegaraan: existingWarga.kewarganegaraan,
-                                no_kk: existingWarga.no_kk || data.no_kk || wargaData.no_kk || formData.no_kk,
+                                no_kk: data.no_kk || wargaData.no_kk || existingWarga.no_kk || formData.no_kk,
                                 pendidikan: existingWarga.pendidikan || wargaData.pendidikan,
                                 nama_ayah: existingWarga.nama_ayah || wargaData.nama_ayah,
                                 nama_ibu: existingWarga.nama_ibu || wargaData.nama_ibu,
