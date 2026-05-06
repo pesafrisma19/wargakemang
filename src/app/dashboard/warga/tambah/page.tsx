@@ -152,11 +152,21 @@ export default function TambahWargaPage() {
                 body: uploadFormData,
             })
 
-            const result = await response.json()
-
             if (!response.ok) {
-                throw new Error(result.error || 'Gagal membaca KTP')
+                let errMsg = 'Gagal membaca dokumen'
+                try {
+                    const errData = await response.json()
+                    errMsg = errData.error || errMsg
+                } catch {
+                    const text = await response.text()
+                    if (text.includes('Request Entity') || response.status === 413) {
+                        errMsg = 'Ukuran gambar terlalu besar. Coba foto dengan resolusi lebih kecil.'
+                    }
+                }
+                throw new Error(errMsg)
             }
+
+            const result = await response.json()
 
             const data = result.data
 
@@ -645,8 +655,8 @@ export default function TambahWargaPage() {
                                     </div>
                                     {item.kkConflict && (
                                         <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${item.kkConflict.autoResolved
-                                                ? 'bg-green-50 border-green-200'
-                                                : 'bg-amber-50 border-amber-200'
+                                            ? 'bg-green-50 border-green-200'
+                                            : 'bg-amber-50 border-amber-200'
                                             }`}>
                                             <AlertTriangle size={20} className={item.kkConflict.autoResolved ? 'text-green-600 mt-0.5 flex-shrink-0' : 'text-amber-600 mt-0.5 flex-shrink-0'} />
                                             <div className="text-sm">
