@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CheckCircle, XCircle, X, AlertCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, XCircle, X, AlertCircle, AlertTriangle, Loader2 } from 'lucide-react'
 
-export type ToastType = 'success' | 'error' | 'info' | 'loading'
+export type ToastType = 'success' | 'error' | 'info' | 'warning' | 'loading'
 
 interface ToastProps {
     message: string
@@ -57,6 +57,13 @@ export default function Toast({ message, type, onClose, duration = 4000 }: Toast
             iconBg: 'bg-gray-100',
             iconColor: 'text-gray-600',
             textColor: 'text-gray-800'
+        },
+        warning: {
+            bg: 'bg-white',
+            border: 'border-amber-200',
+            iconBg: 'bg-amber-100',
+            iconColor: 'text-amber-600',
+            textColor: 'text-amber-800'
         }
     }
 
@@ -64,7 +71,8 @@ export default function Toast({ message, type, onClose, duration = 4000 }: Toast
         success: <CheckCircle className={`w-5 h-5 ${styles[type].iconColor}`} />,
         error: <XCircle className={`w-5 h-5 ${styles[type].iconColor}`} />,
         info: <AlertCircle className={`w-5 h-5 ${styles[type].iconColor}`} />,
-        loading: <Loader2 className={`w-5 h-5 ${styles[type].iconColor} animate-spin`} />
+        loading: <Loader2 className={`w-5 h-5 ${styles[type].iconColor} animate-spin`} />,
+        warning: <AlertTriangle className={`w-5 h-5 ${styles[type].iconColor}`} />
     }
 
     const style = styles[type]
