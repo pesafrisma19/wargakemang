@@ -152,21 +152,20 @@ export default function TambahWargaPage() {
                 body: uploadFormData,
             })
 
+            const responseText = await response.text()
+
             if (!response.ok) {
                 let errMsg = 'Gagal membaca dokumen'
                 try {
-                    const errData = await response.json()
+                    const errData = JSON.parse(responseText)
                     errMsg = errData.error || errMsg
                 } catch {
-                    const text = await response.text()
-                    if (text.includes('Request Entity') || response.status === 413) {
-                        errMsg = 'Ukuran gambar terlalu besar. Coba foto dengan resolusi lebih kecil.'
-                    }
+                    errMsg = responseText || errMsg
                 }
                 throw new Error(errMsg)
             }
 
-            const result = await response.json()
+            const result = JSON.parse(responseText)
 
             const data = result.data
 
