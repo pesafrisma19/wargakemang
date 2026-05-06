@@ -19,6 +19,7 @@ Format JSON yang diharapkan HANYA SEPERTI INI:
 {
   "jenis_dokumen": "KTP" atau "KK",
   "no_kk": "string (16 digit) jika dokumen adalah KK, jika KTP kosongkan",
+  "tanggal_dikeluarkan": "string format YYYY-MM-DD, diambil dari tulisan 'Dikeluarkan Tanggal : DD-MM-YYYY' di bagian bawah KK. Jika KTP kosongkan",
   "alamat": "string jalan/kampung tanpa RT/RW/Desa (ambil dari kop jika KK, dari baris alamat jika KTP)",
   "rt": "string (3 digit, misal 001)",
   "rw": "string (3 digit, misal 002)",
@@ -46,6 +47,7 @@ Format JSON yang diharapkan HANYA SEPERTI INI:
 
 PERATURAN KHUSUS UNTUK KK (Kartu Keluarga):
 - Jika dokumen adalah Kartu Keluarga, ekstrak Nomor KK, Alamat, RT, RW, Desa, Kecamatan yang ada di bagian atas (Header/Kop KK).
+- Ekstrak juga "Dikeluarkan Tanggal" yang ada di bagian bawah kiri KK (biasanya format DD-MM-YYYY), konversi ke YYYY-MM-DD.
 - Untuk data individu, ekstrak SEMUA ORANG yang ada di dalam tabel secara berurutan.
 - Urutkan sesuai dengan nomor urut baris di tabel KK (misal No 1, lalu No 2, dst).
 - Masukkan semua orang tersebut ke dalam array "data_warga".

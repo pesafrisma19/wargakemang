@@ -14,7 +14,7 @@ import {
     DEFAULT_DESA,
     DEFAULT_KECAMATAN
 } from '@/types/database'
-import { ArrowLeft, Save, Camera, X, ScanLine, Loader2 } from 'lucide-react'
+import { ArrowLeft, Save, Camera, X, ScanLine, Loader2, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import Toast, { ToastType } from '@/components/ui/Toast'
 
@@ -74,7 +74,7 @@ export default function TambahWargaPage() {
     const [isScanning, setIsScanning] = useState(false)
         const [isUpdateMode, setIsUpdateMode] = useState(false)
     const [existingId, setExistingId] = useState<string | null>(null)
-    const [bulkData, setBulkData] = useState<{ formData: WargaInput, isUpdateMode: boolean, existingId: string | null }[] | null>(null)
+    const [bulkData, setBulkData] = useState<{ formData: WargaInput, isUpdateMode: boolean, existingId: string | null, kkConflict?: { oldKk: string, newKk: string, oldTanggal: string | null, newTanggal: string | null, autoResolved: boolean } }[] | null>(null)
     const scanInputRef = useRef<HTMLInputElement>(null)
     const [profile, setProfile] = useState<User | null>(null)
     const [fotoPreview, setFotoPreview] = useState<string | null>(null)
@@ -100,6 +100,7 @@ export default function TambahWargaPage() {
         pekerjaan: '',
         kewarganegaraan: 'WNI',
         no_kk: '',
+        tanggal_kk: '',
         no_wa: '',
         hubungan_keluarga: 'KEPALA KELUARGA',
         foto_ktp: null,
@@ -160,6 +161,9 @@ export default function TambahWargaPage() {
             const data = result.data
 
             if (data.data_warga && Array.isArray(data.data_warga)) {
+                const scannedKkDate = data.tanggal_dikeluarkan || null
+                const scannedKk = data.no_kk || null
+
                 const processed = await Promise.all(data.data_warga.map(async (wargaData: any) => {
                     let existingWarga = null;
                     if (wargaData.nik) {
@@ -168,9 +172,43 @@ export default function TambahWargaPage() {
                     }
 
                     if (existingWarga) {
+                        // Detect KK conflict: warga exists with a different KK number
+                        let kkConflict = undefined
+                        let resolvedKk = existingWarga.no_kk || scannedKk || formData.no_kk
+                        let resolvedTanggalKk = existingWarga.tanggal_kk || scannedKkDate
+
+                        if (scannedKk && existingWarga.no_kk && scannedKk !== existingWarga.no_kk) {
+                            const oldDate = existingWarga.tanggal_kk ? new Date(existingWarga.tanggal_kk) : null
+                            const newDate = scannedKkDate ? new Date(scannedKkDate) : null
+
+                            if (newDate && oldDate) {
+                                // Both dates available: newer wins
+                                if (newDate >= oldDate) {
+                                    resolvedKk = scannedKk
+                                    resolvedTanggalKk = scannedKkDate
+                                    kkConflict = { oldKk: existingWarga.no_kk, newKk: scannedKk, oldTanggal: existingWarga.tanggal_kk, newTanggal: scannedKkDate, autoResolved: true }
+                                } else {
+                                    // Scanned KK is older - keep old but warn
+                                    resolvedKk = existingWarga.no_kk
+                                    resolvedTanggalKk = existingWarga.tanggal_kk
+                                    kkConflict = { oldKk: existingWarga.no_kk, newKk: scannedKk, oldTanggal: existingWarga.tanggal_kk, newTanggal: scannedKkDate, autoResolved: false }
+                                }
+                            } else {
+                                // Date not available on one/both - use scanned KK but warn
+                                resolvedKk = scannedKk
+                                resolvedTanggalKk = scannedKkDate || existingWarga.tanggal_kk
+                                kkConflict = { oldKk: existingWarga.no_kk, newKk: scannedKk, oldTanggal: existingWarga.tanggal_kk, newTanggal: scannedKkDate, autoResolved: false }
+                            }
+                        } else if (scannedKk) {
+                            // No conflict, just use scanned KK
+                            resolvedKk = scannedKk
+                            resolvedTanggalKk = scannedKkDate || existingWarga.tanggal_kk
+                        }
+
                         return {
                             isUpdateMode: true,
                             existingId: existingWarga.id,
+                            kkConflict,
                             formData: {
                                 ...wargaData,
                                 nik: existingWarga.nik,
@@ -188,7 +226,8 @@ export default function TambahWargaPage() {
                                 status_kawin: existingWarga.status_kawin,
                                 pekerjaan: existingWarga.pekerjaan,
                                 kewarganegaraan: existingWarga.kewarganegaraan,
-                                no_kk: data.no_kk || wargaData.no_kk || existingWarga.no_kk || formData.no_kk,
+                                no_kk: resolvedKk,
+                                tanggal_kk: resolvedTanggalKk,
                                 pendidikan: existingWarga.pendidikan || wargaData.pendidikan,
                                 nama_ayah: existingWarga.nama_ayah || wargaData.nama_ayah,
                                 nama_ibu: existingWarga.nama_ibu || wargaData.nama_ibu,
@@ -203,7 +242,8 @@ export default function TambahWargaPage() {
                             formData: {
                                 ...formData,
                                 ...wargaData,
-                                no_kk: data.no_kk || wargaData.no_kk || formData.no_kk,
+                                no_kk: scannedKk || wargaData.no_kk || formData.no_kk,
+                                tanggal_kk: scannedKkDate || '',
                                 alamat: data.alamat || wargaData.alamat || formData.alamat,
                                 rt: data.rt || wargaData.rt || formData.rt,
                                 rw: data.rw || wargaData.rw || formData.rw,
@@ -214,8 +254,13 @@ export default function TambahWargaPage() {
                     }
                 }))
                 
+                const conflicts = processed.filter(p => p.kkConflict)
                 setBulkData(processed)
-                setToast({ message: `Berhasil mengekstrak ${processed.length} warga! Silakan periksa kembali.`, type: 'success' })
+                if (conflicts.length > 0) {
+                    setToast({ message: `⚠️ ${conflicts.length} warga terdeteksi pindah KK! Periksa kembali.`, type: 'warning' })
+                } else {
+                    setToast({ message: `Berhasil mengekstrak ${processed.length} warga! Silakan periksa kembali.`, type: 'success' })
+                }
             } else {
                 // Fallback if not an array (though it should be)
                 setToast({ message: 'Format data tidak sesuai.', type: 'error' })
@@ -379,6 +424,7 @@ export default function TambahWargaPage() {
                     provinsi: 'JAWA BARAT',
                     foto_ktp: fotoUrl || item.formData.foto_ktp,
                     foto_kk: fotoKkUrl || item.formData.foto_kk,
+                    tanggal_kk: item.formData.tanggal_kk || null,
                 }
 
                 if (item.isUpdateMode && item.existingId) {
@@ -589,13 +635,56 @@ export default function TambahWargaPage() {
                     return (
                         <div key={index} className={bulkData ? "p-4 sm:p-6 bg-gray-50 rounded-xl border border-gray-200 mb-6 relative" : ""}>
                             {bulkData && (
-                                <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+                                <>
+                                <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
                                     <h3 className="font-bold text-lg text-gray-800">Warga #{index + 1} - {currentFormData.nama || 'Tanpa Nama'}</h3>
                                     <div className="flex items-center gap-2">
                                         {isUpdate && <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">Update Data</span>}
                                         <button type="button" onClick={() => setBulkData(bulkData.filter((_, i) => i !== index))} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg flex items-center gap-1 text-sm font-medium"><X size={16} /> Hapus</button>
                                     </div>
                                 </div>
+                                {item.kkConflict && (
+                                    <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${
+                                        item.kkConflict.autoResolved
+                                            ? 'bg-green-50 border-green-200'
+                                            : 'bg-amber-50 border-amber-200'
+                                    }`}>
+                                        <AlertTriangle size={20} className={item.kkConflict.autoResolved ? 'text-green-600 mt-0.5 flex-shrink-0' : 'text-amber-600 mt-0.5 flex-shrink-0'} />
+                                        <div className="text-sm">
+                                            <p className={`font-semibold ${item.kkConflict.autoResolved ? 'text-green-800' : 'text-amber-800'}`}>
+                                                {item.kkConflict.autoResolved ? '✅ Pindah KK (Otomatis)' : '⚠️ Konflik KK - Periksa!'}
+                                            </p>
+                                            <div className="mt-2 space-y-1 text-gray-700">
+                                                <p>KK Lama: <span className="font-mono font-medium">{item.kkConflict.oldKk}</span>
+                                                    {item.kkConflict.oldTanggal && <span className="text-gray-500 ml-1">(Dikeluarkan: {new Date(item.kkConflict.oldTanggal).toLocaleDateString('id-ID')})</span>}
+                                                </p>
+                                                <p>KK Baru: <span className="font-mono font-medium">{item.kkConflict.newKk}</span>
+                                                    {item.kkConflict.newTanggal && <span className="text-gray-500 ml-1">(Dikeluarkan: {new Date(item.kkConflict.newTanggal).toLocaleDateString('id-ID')})</span>}
+                                                </p>
+                                            </div>
+                                            {item.kkConflict.autoResolved ? (
+                                                <p className="mt-2 text-green-700 text-xs">KK baru lebih baru, otomatis dipindahkan.</p>
+                                            ) : (
+                                                <div className="mt-3 flex gap-2">
+                                                    <button type="button" onClick={() => {
+                                                        const newBulk = [...bulkData!];
+                                                        newBulk[index].formData.no_kk = item.kkConflict!.newKk;
+                                                        newBulk[index].formData.tanggal_kk = item.kkConflict!.newTanggal || newBulk[index].formData.tanggal_kk;
+                                                        newBulk[index].kkConflict = { ...item.kkConflict!, autoResolved: true };
+                                                        setBulkData(newBulk);
+                                                    }} className="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700">Pindah ke KK Baru</button>
+                                                    <button type="button" onClick={() => {
+                                                        const newBulk = [...bulkData!];
+                                                        newBulk[index].formData.no_kk = item.kkConflict!.oldKk;
+                                                        newBulk[index].kkConflict = undefined;
+                                                        setBulkData(newBulk);
+                                                    }} className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300">Tetap di KK Lama</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                </>
                             )}
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">

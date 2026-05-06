@@ -53,6 +53,7 @@ export interface Warga {
   pekerjaan: string;
   kewarganegaraan: string;
   no_kk: string | null;
+  tanggal_kk: string | null;
   no_wa: string | null;
   hubungan_keluarga: HubunganKeluarga;
   foto_ktp: string | null;
@@ -84,6 +85,7 @@ export interface WargaInput {
   pekerjaan: string;
   kewarganegaraan?: string;
   no_kk?: string | null;
+  tanggal_kk?: string | null;
   no_wa?: string | null;
   hubungan_keluarga?: HubunganKeluarga;
   foto_ktp?: string | null;
