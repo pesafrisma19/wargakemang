@@ -72,7 +72,7 @@ export default function TambahWargaPage() {
     const [saving, setSaving] = useState(false)
     const [uploading, setUploading] = useState(false)
     const [isScanning, setIsScanning] = useState(false)
-        const [isUpdateMode, setIsUpdateMode] = useState(false)
+    const [isUpdateMode, setIsUpdateMode] = useState(false)
     const [existingId, setExistingId] = useState<string | null>(null)
     const [bulkData, setBulkData] = useState<{ formData: WargaInput, isUpdateMode: boolean, existingId: string | null, kkConflict?: { oldKk: string, newKk: string, oldTanggal: string | null, newTanggal: string | null, autoResolved: boolean } }[] | null>(null)
     const scanInputRef = useRef<HTMLInputElement>(null)
@@ -253,7 +253,7 @@ export default function TambahWargaPage() {
                         }
                     }
                 }))
-                
+
                 const conflicts = processed.filter(p => p.kkConflict)
                 setBulkData(processed)
                 if (conflicts.length > 0) {
@@ -275,7 +275,7 @@ export default function TambahWargaPage() {
                     setSelectedFile(blob)
                     setFotoPreview(dataUrl)
                 }
-            } catch (err) {}
+            } catch (err) { }
 
         } catch (error: any) {
             setToast({ message: error.message, type: 'error' })
@@ -369,7 +369,7 @@ export default function TambahWargaPage() {
 
         try {
             const dataToProcess = bulkData || [{ formData, isUpdateMode, existingId }];
-            
+
             // Check NIK first if NOT in update mode
             for (const item of dataToProcess) {
                 if (!item.isUpdateMode) {
@@ -442,7 +442,7 @@ export default function TambahWargaPage() {
                     .from('warga')
                     .update({ foto_kk: fotoKkUrl || dataToProcess[0].formData.foto_kk })
                     .eq('no_kk', dataToProcess[0].formData.no_kk)
-                    // don't exclude nik since we might just want to update all of them safely
+                // don't exclude nik since we might just want to update all of them safely
             }
 
             setSaving(false)
@@ -488,7 +488,7 @@ export default function TambahWargaPage() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:p-8">
-                
+
                 {/* Auto-Fill Banner */}
                 <div className="mb-8 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div>
@@ -614,7 +614,7 @@ export default function TambahWargaPage() {
                         if (bulkData) {
                             const newBulk = [...bulkData];
                             (newBulk[index].formData as any)[name] = value;
-                            
+
                             // Auto-sync address fields if editing the first person (Kepala Keluarga)
                             if (index === 0 && ['alamat', 'rt', 'rw', 'desa', 'kecamatan'].includes(name)) {
                                 for (let i = 1; i < newBulk.length; i++) {
@@ -622,7 +622,7 @@ export default function TambahWargaPage() {
                                     if (name === 'rw') newBulk[i].formData.rt = '';
                                 }
                             }
-                            
+
                             if (name === 'rw') newBulk[index].formData.rt = '';
                             setBulkData(newBulk);
                         } else {
@@ -636,445 +636,444 @@ export default function TambahWargaPage() {
                         <div key={index} className={bulkData ? "p-4 sm:p-6 bg-gray-50 rounded-xl border border-gray-200 mb-6 relative" : ""}>
                             {bulkData && (
                                 <>
-                                <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
-                                    <h3 className="font-bold text-lg text-gray-800">Warga #{index + 1} - {currentFormData.nama || 'Tanpa Nama'}</h3>
-                                    <div className="flex items-center gap-2">
-                                        {isUpdate && <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">Update Data</span>}
-                                        <button type="button" onClick={() => setBulkData(bulkData.filter((_, i) => i !== index))} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg flex items-center gap-1 text-sm font-medium"><X size={16} /> Hapus</button>
-                                    </div>
-                                </div>
-                                {item.kkConflict && (
-                                    <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${
-                                        item.kkConflict.autoResolved
-                                            ? 'bg-green-50 border-green-200'
-                                            : 'bg-amber-50 border-amber-200'
-                                    }`}>
-                                        <AlertTriangle size={20} className={item.kkConflict.autoResolved ? 'text-green-600 mt-0.5 flex-shrink-0' : 'text-amber-600 mt-0.5 flex-shrink-0'} />
-                                        <div className="text-sm">
-                                            <p className={`font-semibold ${item.kkConflict.autoResolved ? 'text-green-800' : 'text-amber-800'}`}>
-                                                {item.kkConflict.autoResolved ? '✅ Pindah KK (Otomatis)' : '⚠️ Konflik KK - Periksa!'}
-                                            </p>
-                                            <div className="mt-2 space-y-1 text-gray-700">
-                                                <p>KK Lama: <span className="font-mono font-medium">{item.kkConflict.oldKk}</span>
-                                                    {item.kkConflict.oldTanggal && <span className="text-gray-500 ml-1">(Dikeluarkan: {new Date(item.kkConflict.oldTanggal).toLocaleDateString('id-ID')})</span>}
-                                                </p>
-                                                <p>KK Baru: <span className="font-mono font-medium">{item.kkConflict.newKk}</span>
-                                                    {item.kkConflict.newTanggal && <span className="text-gray-500 ml-1">(Dikeluarkan: {new Date(item.kkConflict.newTanggal).toLocaleDateString('id-ID')})</span>}
-                                                </p>
-                                            </div>
-                                            {item.kkConflict.autoResolved ? (
-                                                <p className="mt-2 text-green-700 text-xs">KK baru lebih baru, otomatis dipindahkan.</p>
-                                            ) : (
-                                                <div className="mt-3 flex gap-2">
-                                                    <button type="button" onClick={() => {
-                                                        const newBulk = [...bulkData!];
-                                                        newBulk[index].formData.no_kk = item.kkConflict!.newKk;
-                                                        newBulk[index].formData.tanggal_kk = item.kkConflict!.newTanggal || newBulk[index].formData.tanggal_kk;
-                                                        newBulk[index].kkConflict = { ...item.kkConflict!, autoResolved: true };
-                                                        setBulkData(newBulk);
-                                                    }} className="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700">Pindah ke KK Baru</button>
-                                                    <button type="button" onClick={() => {
-                                                        const newBulk = [...bulkData!];
-                                                        newBulk[index].formData.no_kk = item.kkConflict!.oldKk;
-                                                        newBulk[index].kkConflict = undefined;
-                                                        setBulkData(newBulk);
-                                                    }} className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300">Tetap di KK Lama</button>
-                                                </div>
-                                            )}
+                                    <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
+                                        <h3 className="font-bold text-lg text-gray-800">Warga #{index + 1} - {currentFormData.nama || 'Tanpa Nama'}</h3>
+                                        <div className="flex items-center gap-2">
+                                            {isUpdate && <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">Update Data</span>}
+                                            <button type="button" onClick={() => setBulkData(bulkData.filter((_, i) => i !== index))} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg flex items-center gap-1 text-sm font-medium"><X size={16} /> Hapus</button>
                                         </div>
                                     </div>
-                                )}
+                                    {item.kkConflict && (
+                                        <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${item.kkConflict.autoResolved
+                                                ? 'bg-green-50 border-green-200'
+                                                : 'bg-amber-50 border-amber-200'
+                                            }`}>
+                                            <AlertTriangle size={20} className={item.kkConflict.autoResolved ? 'text-green-600 mt-0.5 flex-shrink-0' : 'text-amber-600 mt-0.5 flex-shrink-0'} />
+                                            <div className="text-sm">
+                                                <p className={`font-semibold ${item.kkConflict.autoResolved ? 'text-green-800' : 'text-amber-800'}`}>
+                                                    {item.kkConflict.autoResolved ? '✅ Pindah KK (Otomatis)' : '⚠️ Konflik KK - Periksa!'}
+                                                </p>
+                                                <div className="mt-2 space-y-1 text-gray-700">
+                                                    <p>KK Lama: <span className="font-mono font-medium">{item.kkConflict.oldKk}</span>
+                                                        {item.kkConflict.oldTanggal && <span className="text-gray-500 ml-1">(Dikeluarkan: {new Date(item.kkConflict.oldTanggal).toLocaleDateString('id-ID')})</span>}
+                                                    </p>
+                                                    <p>KK Baru: <span className="font-mono font-medium">{item.kkConflict.newKk}</span>
+                                                        {item.kkConflict.newTanggal && <span className="text-gray-500 ml-1">(Dikeluarkan: {new Date(item.kkConflict.newTanggal).toLocaleDateString('id-ID')})</span>}
+                                                    </p>
+                                                </div>
+                                                {item.kkConflict.autoResolved ? (
+                                                    <p className="mt-2 text-green-700 text-xs">KK baru lebih baru, otomatis dipindahkan.</p>
+                                                ) : (
+                                                    <div className="mt-3 flex gap-2">
+                                                        <button type="button" onClick={() => {
+                                                            const newBulk = [...bulkData!];
+                                                            newBulk[index].formData.no_kk = item.kkConflict!.newKk;
+                                                            newBulk[index].formData.tanggal_kk = item.kkConflict!.newTanggal || newBulk[index].formData.tanggal_kk;
+                                                            newBulk[index].kkConflict = { ...item.kkConflict!, autoResolved: true };
+                                                            setBulkData(newBulk);
+                                                        }} className="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700">Pindah ke KK Baru</button>
+                                                        <button type="button" onClick={() => {
+                                                            const newBulk = [...bulkData!];
+                                                            newBulk[index].formData.no_kk = item.kkConflict!.oldKk;
+                                                            newBulk[index].kkConflict = undefined;
+                                                            setBulkData(newBulk);
+                                                        }} className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-300">Tetap di KK Lama</button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </>
                             )}
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                    {/* NIK */}
-                    <div className="sm:col-span-2 md:col-span-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">NIK *</label>
-                        <input
-                            type="text"
-                            name="nik"
-                            value={currentFormData.nik}
-                            onChange={handleCurrentChange}
-                            maxLength={16}
-                            inputMode="numeric"
-                            pattern="[0-9]{16}"
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                            placeholder="16 digit NIK"
-                            required
-                        />
-                    </div>
+                                {/* NIK */}
+                                <div className="sm:col-span-2 md:col-span-1">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">NIK *</label>
+                                    <input
+                                        type="text"
+                                        name="nik"
+                                        value={currentFormData.nik}
+                                        onChange={handleCurrentChange}
+                                        maxLength={16}
+                                        inputMode="numeric"
+                                        pattern="[0-9]{16}"
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                        placeholder="16 digit NIK"
+                                        required
+                                    />
+                                </div>
 
-                    {/* Nama */}
-                    <div className="sm:col-span-2 md:col-span-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Nama Lengkap *</label>
-                        <input
-                            type="text"
-                            name="nama"
-                            value={currentFormData.nama}
-                            onChange={handleCurrentChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                            placeholder="Nama sesuai KTP"
-                            required
-                        />
-                    </div>
+                                {/* Nama */}
+                                <div className="sm:col-span-2 md:col-span-1">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Nama Lengkap *</label>
+                                    <input
+                                        type="text"
+                                        name="nama"
+                                        value={currentFormData.nama}
+                                        onChange={handleCurrentChange}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                        placeholder="Nama sesuai KTP"
+                                        required
+                                    />
+                                </div>
 
-                    {/* Tempat Lahir */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Tempat Lahir *</label>
-                        <input
-                            type="text"
-                            name="tempat_lahir"
-                            value={currentFormData.tempat_lahir}
-                            onChange={handleCurrentChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                            placeholder="Kota/Kabupaten"
-                            required
-                        />
-                    </div>
+                                {/* Tempat Lahir */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Tempat Lahir *</label>
+                                    <input
+                                        type="text"
+                                        name="tempat_lahir"
+                                        value={currentFormData.tempat_lahir}
+                                        onChange={handleCurrentChange}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                        placeholder="Kota/Kabupaten"
+                                        required
+                                    />
+                                </div>
 
-                    {/* Tanggal Lahir */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Tanggal Lahir *</label>
-                        <input
-                            type="date"
-                            name="tanggal_lahir"
-                            value={currentFormData.tanggal_lahir}
-                            onChange={handleCurrentChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                            required
-                        />
-                    </div>
+                                {/* Tanggal Lahir */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Tanggal Lahir *</label>
+                                    <input
+                                        type="date"
+                                        name="tanggal_lahir"
+                                        value={currentFormData.tanggal_lahir}
+                                        onChange={handleCurrentChange}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                        required
+                                    />
+                                </div>
 
-                    {/* Jenis Kelamin */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Jenis Kelamin *</label>
-                        <select
-                            name="jenis_kelamin"
-                            value={currentFormData.jenis_kelamin}
-                            onChange={handleCurrentChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                            required
-                        >
-                            <option value="L">Laki-laki</option>
-                            <option value="P">Perempuan</option>
-                        </select>
-                    </div>
+                                {/* Jenis Kelamin */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Jenis Kelamin *</label>
+                                    <select
+                                        name="jenis_kelamin"
+                                        value={currentFormData.jenis_kelamin}
+                                        onChange={handleCurrentChange}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                        required
+                                    >
+                                        <option value="L">Laki-laki</option>
+                                        <option value="P">Perempuan</option>
+                                    </select>
+                                </div>
 
-                    {/* Golongan Darah */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Golongan Darah</label>
-                        <select
-                            name="golongan_darah"
-                            value={currentFormData.golongan_darah || '-'}
-                            onChange={handleCurrentChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                        >
-                            {GOLONGAN_DARAH_OPTIONS.map(gol => (
-                                <option key={gol} value={gol}>{gol === '-' ? 'Tidak Diketahui' : gol}</option>
-                            ))}
-                        </select>
-                    </div>
+                                {/* Golongan Darah */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Golongan Darah</label>
+                                    <select
+                                        name="golongan_darah"
+                                        value={currentFormData.golongan_darah || '-'}
+                                        onChange={handleCurrentChange}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                    >
+                                        {GOLONGAN_DARAH_OPTIONS.map(gol => (
+                                            <option key={gol} value={gol}>{gol === '-' ? 'Tidak Diketahui' : gol}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                    {/* Alamat */}
-                    <div className={index > 0 ? "hidden" : "sm:col-span-2"}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Alamat *</label>
-                        <textarea
-                            name="alamat"
-                            value={currentFormData.alamat}
-                            onChange={handleCurrentChange}
-                            rows={2}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white resize-none"
-                            placeholder="Alamat lengkap (Kampung/Jalan, No. Rumah)"
-                            required
-                        />
-                    </div>
+                                {/* Alamat */}
+                                <div className={index > 0 ? "hidden" : "sm:col-span-2"}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Alamat *</label>
+                                    <textarea
+                                        name="alamat"
+                                        value={currentFormData.alamat}
+                                        onChange={handleCurrentChange}
+                                        rows={2}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white resize-none"
+                                        placeholder="Alamat lengkap (Kampung/Jalan, No. Rumah)"
+                                        required
+                                    />
+                                </div>
 
-                    {/* RW */}
-                    <div className={index > 0 ? "hidden" : ""}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">RW *</label>
-                        <select
-                            name="rw"
-                            value={currentFormData.rw}
-                            onChange={(e) => {
-                                if (bulkData) {
-                                    const newBulk = [...bulkData];
-                                    newBulk[index].formData.rw = e.target.value;
-                                    newBulk[index].formData.rt = '';
-                                    setBulkData(newBulk);
-                                } else {
-                                    setFormData(prev => ({ ...prev, rw: e.target.value, rt: '' }))
-                                }
-                            }}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                            required
-                            disabled={profile?.role !== 'admin'}
-                        >
-                            <option value="">Pilih RW</option>
-                            {Object.keys(RW_RT_STRUCTURE).map(rw => (
-                                <option key={rw} value={rw}>RW {rw}</option>
-                            ))}
-                        </select>
-                    </div>
+                                {/* RW */}
+                                <div className={index > 0 ? "hidden" : ""}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">RW *</label>
+                                    <select
+                                        name="rw"
+                                        value={currentFormData.rw}
+                                        onChange={(e) => {
+                                            if (bulkData) {
+                                                const newBulk = [...bulkData];
+                                                newBulk[index].formData.rw = e.target.value;
+                                                newBulk[index].formData.rt = '';
+                                                setBulkData(newBulk);
+                                            } else {
+                                                setFormData(prev => ({ ...prev, rw: e.target.value, rt: '' }))
+                                            }
+                                        }}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                        required
+                                        disabled={profile?.role !== 'admin'}
+                                    >
+                                        <option value="">Pilih RW</option>
+                                        {Object.keys(RW_RT_STRUCTURE).map(rw => (
+                                            <option key={rw} value={rw}>RW {rw}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                    {/* RT */}
-                    <div className={index > 0 ? "hidden" : ""}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">RT *</label>
-                        <select
-                            name="rt"
-                            value={currentFormData.rt}
-                            onChange={handleCurrentChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                            required
-                            disabled={profile?.role !== 'admin' || !currentFormData.rw}
-                        >
-                            <option value="">Pilih RT</option>
-                            {currentFormData.rw && RW_RT_STRUCTURE[currentFormData.rw as keyof typeof RW_RT_STRUCTURE]?.map(rt => (
-                                <option key={rt} value={rt}>RT {rt}</option>
-                            ))}
-                        </select>
-                    </div>
+                                {/* RT */}
+                                <div className={index > 0 ? "hidden" : ""}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">RT *</label>
+                                    <select
+                                        name="rt"
+                                        value={currentFormData.rt}
+                                        onChange={handleCurrentChange}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                        required
+                                        disabled={profile?.role !== 'admin' || !currentFormData.rw}
+                                    >
+                                        <option value="">Pilih RT</option>
+                                        {currentFormData.rw && RW_RT_STRUCTURE[currentFormData.rw as keyof typeof RW_RT_STRUCTURE]?.map(rt => (
+                                            <option key={rt} value={rt}>RT {rt}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                    {/* Desa */}
-                    <div className={index > 0 ? "hidden" : ""}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Desa</label>
-                        <input
-                            type="text"
-                            value={DEFAULT_DESA}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl bg-gray-100 text-gray-500 text-base"
-                            disabled
-                        />
-                    </div>
+                                {/* Desa */}
+                                <div className={index > 0 ? "hidden" : ""}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Desa</label>
+                                    <input
+                                        type="text"
+                                        value={DEFAULT_DESA}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl bg-gray-100 text-gray-500 text-base"
+                                        disabled
+                                    />
+                                </div>
 
-                    {/* Kecamatan */}
-                    <div className={index > 0 ? "hidden" : ""}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Kecamatan</label>
-                        <input
-                            type="text"
-                            value={DEFAULT_KECAMATAN}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl bg-gray-100 text-gray-500 text-base"
-                            disabled
-                        />
-                    </div>
+                                {/* Kecamatan */}
+                                <div className={index > 0 ? "hidden" : ""}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Kecamatan</label>
+                                    <input
+                                        type="text"
+                                        value={DEFAULT_KECAMATAN}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl bg-gray-100 text-gray-500 text-base"
+                                        disabled
+                                    />
+                                </div>
 
-                    {/* Agama */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Agama *</label>
-                        <select
-                            name="agama"
-                            value={currentFormData.agama}
-                            onChange={handleCurrentChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                            required
-                        >
-                            {AGAMA_OPTIONS.map(agama => (
-                                <option key={agama} value={agama}>{agama}</option>
-                            ))}
-                        </select>
-                    </div>
+                                {/* Agama */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Agama *</label>
+                                    <select
+                                        name="agama"
+                                        value={currentFormData.agama}
+                                        onChange={handleCurrentChange}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                        required
+                                    >
+                                        {AGAMA_OPTIONS.map(agama => (
+                                            <option key={agama} value={agama}>{agama}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                    {/* Status Kawin */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Status Kawin *</label>
-                        <select
-                            name="status_kawin"
-                            value={currentFormData.status_kawin}
-                            onChange={handleCurrentChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                            required
-                        >
-                            {STATUS_KAWIN_OPTIONS.map(status => (
-                                <option key={status} value={status}>{status}</option>
-                            ))}
-                        </select>
-                    </div>
+                                {/* Status Kawin */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Status Kawin *</label>
+                                    <select
+                                        name="status_kawin"
+                                        value={currentFormData.status_kawin}
+                                        onChange={handleCurrentChange}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                        required
+                                    >
+                                        {STATUS_KAWIN_OPTIONS.map(status => (
+                                            <option key={status} value={status}>{status}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                    {/* Pendidikan */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Pendidikan Terakhir *</label>
-                        <select
-                            name="pendidikan"
-                            value={currentFormData.pendidikan || ''}
-                            onChange={handleCurrentChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                        >
-                            <option value="">Pilih Pendidikan</option>
-                            <option value="TIDAK/BELUM SEKOLAH">TIDAK/BELUM SEKOLAH</option>
-                            <option value="BELUM TAMAT SD/SEDERAJAT">BELUM TAMAT SD/SEDERAJAT</option>
-                            <option value="TAMAT SD/SEDERAJAT">TAMAT SD/SEDERAJAT</option>
-                            <option value="SLTP/SEDERAJAT">SLTP/SEDERAJAT</option>
-                            <option value="SLTA/SEDERAJAT">SLTA/SEDERAJAT</option>
-                            <option value="DIPLOMA I/II">DIPLOMA I/II</option>
-                            <option value="AKADEMI/DIPLOMA III/S. MUDA">AKADEMI/DIPLOMA III/S. MUDA</option>
-                            <option value="DIPLOMA IV/STRATA I">DIPLOMA IV/STRATA I</option>
-                            <option value="STRATA II">STRATA II</option>
-                            <option value="STRATA III">STRATA III</option>
-                        </select>
-                    </div>
+                                {/* Pendidikan */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Pendidikan Terakhir *</label>
+                                    <select
+                                        name="pendidikan"
+                                        value={currentFormData.pendidikan || ''}
+                                        onChange={handleCurrentChange}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                    >
+                                        <option value="">Pilih Pendidikan</option>
+                                        <option value="TIDAK/BELUM SEKOLAH">TIDAK/BELUM SEKOLAH</option>
+                                        <option value="BELUM TAMAT SD/SEDERAJAT">BELUM TAMAT SD/SEDERAJAT</option>
+                                        <option value="TAMAT SD/SEDERAJAT">TAMAT SD/SEDERAJAT</option>
+                                        <option value="SLTP/SEDERAJAT">SLTP/SEDERAJAT</option>
+                                        <option value="SLTA/SEDERAJAT">SLTA/SEDERAJAT</option>
+                                        <option value="DIPLOMA I/II">DIPLOMA I/II</option>
+                                        <option value="AKADEMI/DIPLOMA III/S. MUDA">AKADEMI/DIPLOMA III/S. MUDA</option>
+                                        <option value="DIPLOMA IV/STRATA I">DIPLOMA IV/STRATA I</option>
+                                        <option value="STRATA II">STRATA II</option>
+                                        <option value="STRATA III">STRATA III</option>
+                                    </select>
+                                </div>
 
-                    {/* Pekerjaan */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Pekerjaan *</label>
-                        <input
-                            type="text"
-                            name="pekerjaan"
-                            value={currentFormData.pekerjaan}
-                            onChange={handleCurrentChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                            placeholder="Pekerjaan"
-                            required
-                        />
-                    </div>
+                                {/* Pekerjaan */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Pekerjaan *</label>
+                                    <input
+                                        type="text"
+                                        name="pekerjaan"
+                                        value={currentFormData.pekerjaan}
+                                        onChange={handleCurrentChange}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                        placeholder="Pekerjaan"
+                                        required
+                                    />
+                                </div>
 
-                    {/* Kewarganegaraan */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Kewarganegaraan *</label>
-                        <select
-                            name="kewarganegaraan"
-                            value={currentFormData.kewarganegaraan}
-                            onChange={handleCurrentChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                            required
-                        >
-                            <option value="WNI">WNI</option>
-                            <option value="WNA">WNA</option>
-                        </select>
-                    </div>
+                                {/* Kewarganegaraan */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Kewarganegaraan *</label>
+                                    <select
+                                        name="kewarganegaraan"
+                                        value={currentFormData.kewarganegaraan}
+                                        onChange={handleCurrentChange}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                        required
+                                    >
+                                        <option value="WNI">WNI</option>
+                                        <option value="WNA">WNA</option>
+                                    </select>
+                                </div>
 
-                    {/* No KK */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">No. Kartu Keluarga</label>
-                        <input
-                            type="text"
-                            name="no_kk"
-                            value={currentFormData.no_kk || ''}
-                            onChange={handleCurrentChange}
-                            onBlur={handleKkBlur}
-                            maxLength={16}
-                            inputMode="numeric"
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                            placeholder="16 digit No. KK"
-                        />
-                    </div>
+                                {/* No KK */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">No. Kartu Keluarga</label>
+                                    <input
+                                        type="text"
+                                        name="no_kk"
+                                        value={currentFormData.no_kk || ''}
+                                        onChange={handleCurrentChange}
+                                        onBlur={handleKkBlur}
+                                        maxLength={16}
+                                        inputMode="numeric"
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                        placeholder="16 digit No. KK"
+                                    />
+                                </div>
 
-                    {/* Hubungan Keluarga */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Hubungan Keluarga</label>
-                        <select
-                            name="hubungan_keluarga"
-                            value={currentFormData.hubungan_keluarga}
-                            onChange={handleCurrentChange}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                        >
-                            {HUBUNGAN_KELUARGA_OPTIONS.map(hub => (
-                                <option key={hub} value={hub}>{hub}</option>
-                            ))}
-                        </select>
-                    </div>
+                                {/* Hubungan Keluarga */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Hubungan Keluarga</label>
+                                    <select
+                                        name="hubungan_keluarga"
+                                        value={currentFormData.hubungan_keluarga}
+                                        onChange={handleCurrentChange}
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                    >
+                                        {HUBUNGAN_KELUARGA_OPTIONS.map(hub => (
+                                            <option key={hub} value={hub}>{hub}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                    {/* No WA */}
-                    <div className="sm:col-span-2 md:col-span-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">No. WhatsApp</label>
-                        <input
-                            type="tel"
-                            name="no_wa"
-                            value={currentFormData.no_wa || ''}
-                            onChange={handleCurrentChange}
-                            inputMode="tel"
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                            placeholder="08xxxxxxxxxx"
-                        />
-                    </div>
-                </div>
+                                {/* No WA */}
+                                <div className="sm:col-span-2 md:col-span-1">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">No. WhatsApp</label>
+                                    <input
+                                        type="tel"
+                                        name="no_wa"
+                                        value={currentFormData.no_wa || ''}
+                                        onChange={handleCurrentChange}
+                                        inputMode="tel"
+                                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                        placeholder="08xxxxxxxxxx"
+                                    />
+                                </div>
+                            </div>
 
-                {/* Data Orang Tua & Pendidikan */}
-                <div className="sm:col-span-2 space-y-4 pt-4 border-t border-gray-100 mt-6 md:col-span-2">
-                    <h3 className="font-semibold text-gray-800">Data Tambahan</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        {/* Nama Ayah */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Nama Ayah</label>
-                            <input
-                                type="text"
-                                name="nama_ayah"
-                                value={currentFormData.nama_ayah}
-                                onChange={handleCurrentChange}
-                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                                placeholder="Nama Ayah"
-                            />
+                            {/* Data Orang Tua & Pendidikan */}
+                            <div className="sm:col-span-2 space-y-4 pt-4 border-t border-gray-100 mt-6 md:col-span-2">
+                                <h3 className="font-semibold text-gray-800">Data Tambahan</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                                    {/* Nama Ayah */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Nama Ayah</label>
+                                        <input
+                                            type="text"
+                                            name="nama_ayah"
+                                            value={currentFormData.nama_ayah}
+                                            onChange={handleCurrentChange}
+                                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                            placeholder="Nama Ayah"
+                                        />
+                                    </div>
+
+                                    {/* Nama Ibu */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Nama Ibu</label>
+                                        <input
+                                            type="text"
+                                            name="nama_ibu"
+                                            value={currentFormData.nama_ibu}
+                                            onChange={handleCurrentChange}
+                                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                            placeholder="Nama Ibu"
+                                        />
+                                    </div>
+
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-4">
+                                    {/* Status Warga */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Status Warga *</label>
+                                        <select
+                                            name="status_warga"
+                                            value={currentFormData.status_warga || 'AKTIF'}
+                                            onChange={handleCurrentChange}
+                                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                            required
+                                        >
+                                            <option value="AKTIF">HIDUP</option>
+                                            <option value="MENINGGAL">MENINGGAL</option>
+                                            <option value="PINDAH">PINDAH</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Disabilitas */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Penyandang Disabilitas</label>
+                                        <select
+                                            name="disabilitas"
+                                            value={currentFormData.disabilitas || 'Tidak Ada'}
+                                            onChange={handleCurrentChange}
+                                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
+                                        >
+                                            <option value="Tidak Ada">Tidak Ada</option>
+                                            <option value="Cacat Fisik">Cacat Fisik</option>
+                                            <option value="Cacat Netra/Buta">Cacat Netra/Buta</option>
+                                            <option value="Cacat Rungu/Wicara">Cacat Rungu/Wicara</option>
+                                            <option value="Cacat Mental/Jiwa">Cacat Mental/Jiwa</option>
+                                            <option value="Cacat Fisik dan Mental">Cacat Fisik dan Mental</option>
+                                            <option value="Lainnya">Lainnya</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Catatan */}
+                                    <div className="sm:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Catatan (Opsional)</label>
+                                        <textarea
+                                            name="catatan"
+                                            value={currentFormData.catatan || ''}
+                                            onChange={handleCurrentChange}
+                                            rows={2}
+                                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white resize-none"
+                                            placeholder="Catatan tambahan (bila ada)..."
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                    );
+                })}
 
-                        {/* Nama Ibu */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Nama Ibu</label>
-                            <input
-                                type="text"
-                                name="nama_ibu"
-                                value={currentFormData.nama_ibu}
-                                onChange={handleCurrentChange}
-                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                                placeholder="Nama Ibu"
-                            />
-                        </div>
-
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-4">
-                        {/* Status Warga */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Status Warga *</label>
-                            <select
-                                name="status_warga"
-                                value={currentFormData.status_warga || 'AKTIF'}
-                                onChange={handleCurrentChange}
-                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                                required
-                            >
-                                <option value="AKTIF">HIDUP</option>
-                                <option value="MENINGGAL">MENINGGAL</option>
-                                <option value="PINDAH">PINDAH</option>
-                            </select>
-                        </div>
-
-                        {/* Disabilitas */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Penyandang Disabilitas</label>
-                            <select
-                                name="disabilitas"
-                                value={currentFormData.disabilitas || 'Tidak Ada'}
-                                onChange={handleCurrentChange}
-                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white"
-                            >
-                                <option value="Tidak Ada">Tidak Ada</option>
-                                <option value="Cacat Fisik">Cacat Fisik</option>
-                                <option value="Cacat Netra/Buta">Cacat Netra/Buta</option>
-                                <option value="Cacat Rungu/Wicara">Cacat Rungu/Wicara</option>
-                                <option value="Cacat Mental/Jiwa">Cacat Mental/Jiwa</option>
-                                <option value="Cacat Fisik dan Mental">Cacat Fisik dan Mental</option>
-                                <option value="Lainnya">Lainnya</option>
-                            </select>
-                        </div>
-
-                        {/* Catatan */}
-                        <div className="sm:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">Catatan (Opsional)</label>
-                            <textarea
-                                name="catatan"
-                                value={currentFormData.catatan || ''}
-                                onChange={handleCurrentChange}
-                                rows={2}
-                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base text-gray-900 bg-white resize-none"
-                                placeholder="Catatan tambahan (bila ada)..."
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    })}
-
-    {/* Submit Button */}
-    <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-100">
+                {/* Submit Button */}
+                <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-100">
                     <Link
                         href="/dashboard/warga"
                         className="w-full sm:w-auto px-6 py-3 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors text-center order-2 sm:order-1"

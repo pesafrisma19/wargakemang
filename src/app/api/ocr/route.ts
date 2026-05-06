@@ -21,8 +21,8 @@ Format JSON yang diharapkan HANYA SEPERTI INI:
   "no_kk": "string (16 digit) jika dokumen adalah KK, jika KTP kosongkan",
   "tanggal_dikeluarkan": "string format YYYY-MM-DD, diambil dari tulisan 'Dikeluarkan Tanggal : DD-MM-YYYY' di bagian bawah KK. Jika KTP kosongkan",
   "alamat": "string jalan/kampung tanpa RT/RW/Desa (ambil dari kop jika KK, dari baris alamat jika KTP)",
-  "rt": "string (3 digit, misal 001)",
-  "rw": "string (3 digit, misal 002)",
+  "rt": "string (3 digit, misal 001). Di KK/KTP tertulis RT/RW, RT adalah angka PERTAMA (kiri) sebelum garis miring",
+  "rw": "string (3 digit, misal 002). Di KK/KTP tertulis RT/RW, RW adalah angka KEDUA (kanan) setelah garis miring",
   "desa": "string nama desa/kelurahan",
   "kecamatan": "string nama kecamatan",
   "data_warga": [
