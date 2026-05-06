@@ -162,7 +162,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (!responseText) {
-      throw new Error('Semua layanan AI sedang tidak tersedia. Silakan coba lagi nanti.');
+      const detail = errors.length > 0 ? ' | ' + errors.join(' | ') : '';
+      return NextResponse.json(
+        { error: `Semua AI gagal membaca gambar.${detail}` },
+        { status: 502 }
+      );
     }
 
     console.log(`OCR berhasil menggunakan: ${usedProvider}`);
@@ -176,7 +180,7 @@ export async function POST(req: NextRequest) {
     } catch (parseError) {
       console.error(`Gagal parsing JSON dari ${usedProvider}:`, responseText);
       return NextResponse.json(
-        { error: 'Gagal membaca data dari gambar. Gambar mungkin terlalu buram.' },
+        { error: `${usedProvider} berhasil membaca tapi hasilnya tidak valid. Coba scan ulang dengan foto lebih jelas.` },
         { status: 422 }
       );
     }
