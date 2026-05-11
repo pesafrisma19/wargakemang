@@ -16,7 +16,7 @@ import {
 } from '@/types/database'
 import { ArrowLeft, Save, Camera, X } from 'lucide-react'
 import Link from 'next/link'
-import Toast, { ToastType } from '@/components/ui/Toast'
+import Toast, { ToastType } from '@/components/shared/Toast'
 // Helper function to compress image
 const compressImage = (file: File): Promise<{ blob: Blob, dataUrl: string }> => {
     return new Promise((resolve, reject) => {

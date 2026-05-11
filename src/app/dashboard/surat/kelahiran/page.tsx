@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Warga, Pengaturan, Penandatangan } from '@/types/database'
-import WargaSearchSelect from '@/components/WargaSearchSelect'
+import WargaSearchSelect from '@/components/shared/WargaSearchSelect'
 import {
     generateSuratKelahiran,
     KelahiranData,
