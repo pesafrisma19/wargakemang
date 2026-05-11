@@ -8,6 +8,7 @@ import { Plus, Search, Edit, Trash2, FileSpreadsheet, FileText, MoreVertical, X,
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { getWargaList, deleteWarga } from '@/actions/warga.actions'
 
 export default function WargaPage() {
     const [warga, setWarga] = useState<Warga[]>([])
@@ -38,14 +39,14 @@ export default function WargaPage() {
                 .single()
             setProfile(profileData)
 
-            let query = supabase.from('warga').select('*').order('created_at', { ascending: false })
-
-            if (profileData?.role !== 'admin') {
-                query = query.eq('rt', profileData?.rt).eq('rw', profileData?.rw)
+            try {
+                // Gunakan server actions
+                const data = await getWargaList(profileData?.role || '', profileData?.rt, profileData?.rw)
+                setWarga(data || [])
+            } catch (error) {
+                console.error(error)
+                setWarga([])
             }
-
-            const { data } = await query
-            setWarga(data || [])
         }
 
         setLoading(false)
@@ -88,8 +89,12 @@ export default function WargaPage() {
     const handleDelete = async () => {
         if (!deleteId) return
 
-        await supabase.from('warga').delete().eq('id', deleteId)
-        setWarga(warga.filter(w => w.id !== deleteId))
+        try {
+            await deleteWarga(deleteId)
+            setWarga(warga.filter(w => w.id !== deleteId))
+        } catch (error) {
+            console.error(error)
+        }
         setShowDeleteModal(false)
         setDeleteId(null)
     }

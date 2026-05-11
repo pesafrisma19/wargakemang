@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Warga, User, Keluarga } from '@/types/database'
 import Link from 'next/link'
 import { Search, Users, ChevronRight, Home, Copy, Check } from 'lucide-react'
+import { getKeluargaList } from '@/actions/keluarga.actions'
 
 export default function KeluargaPage() {
     const [keluargaList, setKeluargaList] = useState<Keluarga[]>([])
@@ -38,57 +39,12 @@ export default function KeluargaPage() {
                 .single()
             setProfile(profileData)
 
-            let query = supabase.from('warga').select('*').order('created_at', { ascending: true })
-
-            if (profileData?.role !== 'admin') {
-                query = query.eq('rt', profileData?.rt).eq('rw', profileData?.rw)
-            }
-
-            const { data: wargaData } = await query
-
-            // Group by No. KK
-            if (wargaData) {
-                const grouped = wargaData.reduce((acc, warga) => {
-                    if (warga.no_kk) {
-                        if (!acc[warga.no_kk]) {
-                            acc[warga.no_kk] = []
-                        }
-                        acc[warga.no_kk].push(warga)
-                    }
-                    return acc
-                }, {} as Record<string, Warga[]>)
-
-                // Convert to Keluarga array and sort members
-                const keluargaArr: Keluarga[] = Object.keys(grouped).map((no_kk) => {
-                    const anggotaList = grouped[no_kk]
-                    // Sort: KEPALA KELUARGA first, then ISTRI, then others
-                    const sortOrder: Record<string, number> = {
-                        'KEPALA KELUARGA': 1,
-                        'ISTRI': 2,
-                        'ANAK': 3,
-                        'ORANG TUA': 4,
-                        'MERTUA': 5,
-                        'MENANTU': 6,
-                        'CUCU': 7,
-                        'FAMILI LAIN': 8,
-                    }
-
-                    const sortedAnggota = [...anggotaList].sort((a, b) => {
-                        const orderA = sortOrder[a.hubungan_keluarga] || 99
-                        const orderB = sortOrder[b.hubungan_keluarga] || 99
-                        return orderA - orderB
-                    })
-
-                    const kepala = sortedAnggota.find(w => w.hubungan_keluarga === 'KEPALA KELUARGA') || null
-
-                    return {
-                        no_kk,
-                        anggota: sortedAnggota,
-                        kepala_keluarga: kepala,
-                    }
-                })
-
-                setKeluargaList(keluargaArr)
+            try {
+                const data = await getKeluargaList(profileData?.role || '', profileData?.rt, profileData?.rw)
+                setKeluargaList(data || [])
+            } catch (error) {
+                console.error(error)
+                setKeluargaList([])
             }
         }
 

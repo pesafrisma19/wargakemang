@@ -6,6 +6,7 @@ import { User } from '@/types/database'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, UserPlus, Edit, Trash2, Key, Users, Shield, ShieldCheck } from 'lucide-react'
+import { getUsersList } from '@/actions/users.actions'
 
 export default function KelolaUsersPage() {
     const [users, setUsers] = useState<User[]>([])
@@ -38,13 +39,13 @@ export default function KelolaUsersPage() {
                 }
             }
 
-            // Fetch all users
-            const { data: usersData } = await supabase
-                .from('users')
-                .select('*')
-                .order('created_at', { ascending: false })
-
-            setUsers(usersData || [])
+            // Fetch all users using Server Actions
+            try {
+                const usersData = await getUsersList()
+                setUsers(usersData || [])
+            } catch (err) {
+                console.error(err)
+            }
             setLoading(false)
         }
         fetchData()

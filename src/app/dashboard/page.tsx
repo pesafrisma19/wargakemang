@@ -33,6 +33,8 @@ function calculateAge(birthDate: string): number {
     return age;
 }
 
+import { getWargaStats } from '@/actions/warga.actions'
+
 export default async function DashboardPage() {
     const supabase = await createClient()
 
@@ -46,41 +48,12 @@ export default async function DashboardPage() {
         .eq('id', user?.id)
         .single()
 
-    // Build query based on user role
-    let query = supabase.from('warga').select('*', { count: 'exact' }).order('created_at', { ascending: false })
-
-    if (profile?.role !== 'admin') {
-        query = query.eq('rt', profile?.rt).eq('rw', profile?.rw)
-    }
-
-    const { data: wargaData, count: totalWarga } = await query
-
-    // Calculate demographics
-    const totalKK = new Set(wargaData?.filter(w => w.no_kk).map(w => w.no_kk)).size
-    const totalLakiLaki = wargaData?.filter(w => w.jenis_kelamin === 'L').length || 0
-    const totalPerempuan = wargaData?.filter(w => w.jenis_kelamin === 'P').length || 0
-    
-    const pctLaki = totalWarga ? Math.round((totalLakiLaki / totalWarga) * 100) : 0;
-    const pctPerempuan = totalWarga ? 100 - pctLaki : 0;
-
-    let balita = 0, remaja = 0, dewasa = 0, lansia = 0;
-    let aktif = 0, meninggal = 0, pindah = 0;
-
-    wargaData?.forEach(w => {
-        // Usia
-        const age = calculateAge(w.tanggal_lahir);
-        if (age <= 5) balita++;
-        else if (age <= 17) remaja++;
-        else if (age <= 59) dewasa++;
-        else lansia++;
-
-        // Status
-        if (w.status_warga === 'AKTIF') aktif++;
-        else if (w.status_warga === 'MENINGGAL') meninggal++;
-        else if (w.status_warga === 'PINDAH') pindah++;
-    });
-
-    const maxAgeGroup = Math.max(balita, remaja, dewasa, lansia) || 1;
+    // Ambil data warga dari actions
+    const { totalWarga, totalKK, aktif, meninggal, pindah, data: wargaData } = await getWargaStats(
+        profile?.role || '', 
+        profile?.rt, 
+        profile?.rw
+    )
 
     const stats = [
         {
@@ -145,67 +118,6 @@ export default async function DashboardPage() {
                         </div>
                     </div>
                 ))}
-            </div>
-
-            {/* Demographics Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-                
-                {/* Gender Ratio */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col justify-center">
-                    <h3 className="text-sm font-bold text-gray-800 mb-6 uppercase tracking-wider">Rasio Gender</h3>
-                    
-                    <div className="flex items-end justify-between mb-3">
-                        <div>
-                            <p className="text-3xl font-bold text-blue-600">{pctLaki}%</p>
-                            <p className="text-sm text-gray-500 font-medium">Laki-laki ({totalLakiLaki})</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-3xl font-bold text-pink-500">{pctPerempuan}%</p>
-                            <p className="text-sm text-gray-500 font-medium">Perempuan ({totalPerempuan})</p>
-                        </div>
-                    </div>
-                    
-                    {/* Progress Bar */}
-                    <div className="h-5 w-full bg-gray-100 rounded-full flex overflow-hidden shadow-inner">
-                        <div className="bg-blue-500 h-full transition-all duration-1000" style={{ width: `${pctLaki}%` }}></div>
-                        <div className="bg-pink-400 h-full transition-all duration-1000" style={{ width: `${pctPerempuan}%` }}></div>
-                    </div>
-                </div>
-
-                {/* Age Categories */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 lg:col-span-2">
-                    <h3 className="text-sm font-bold text-gray-800 mb-6 uppercase tracking-wider">Kategori Usia Warga</h3>
-                    <div className="space-y-5">
-                        <div className="flex items-center gap-4">
-                            <div className="w-24 text-sm text-gray-700 font-semibold">Balita (0-5)</div>
-                            <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                                <div className="h-full bg-emerald-400 rounded-full transition-all duration-1000" style={{ width: `${(balita / maxAgeGroup) * 100}%` }}></div>
-                            </div>
-                            <div className="w-12 text-right text-sm font-bold text-gray-800">{balita}</div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="w-24 text-sm text-gray-700 font-semibold">Remaja (6-17)</div>
-                            <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                                <div className="h-full bg-teal-400 rounded-full transition-all duration-1000" style={{ width: `${(remaja / maxAgeGroup) * 100}%` }}></div>
-                            </div>
-                            <div className="w-12 text-right text-sm font-bold text-gray-800">{remaja}</div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="w-24 text-sm text-gray-700 font-semibold">Dewasa (18-59)</div>
-                            <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                                <div className="h-full bg-blue-500 rounded-full transition-all duration-1000" style={{ width: `${(dewasa / maxAgeGroup) * 100}%` }}></div>
-                            </div>
-                            <div className="w-12 text-right text-sm font-bold text-gray-800">{dewasa}</div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="w-24 text-sm text-gray-700 font-semibold">Lansia (60+)</div>
-                            <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                                <div className="h-full bg-indigo-400 rounded-full transition-all duration-1000" style={{ width: `${(lansia / maxAgeGroup) * 100}%` }}></div>
-                            </div>
-                            <div className="w-12 text-right text-sm font-bold text-gray-800">{lansia}</div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {/* Recent Warga Table */}

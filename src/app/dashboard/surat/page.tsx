@@ -8,6 +8,7 @@ import { FileText, Clock, Trash2, ChevronRight, Search, Eye, Filter, TrendingUp,
 import { generateSuratDomisili, DomisiliData } from '@/lib/surat/domisili'
 import { generateSuratKelahiran, KelahiranData } from '@/lib/surat/kelahiran'
 import { generateSuratUsaha, UsahaData } from '@/lib/surat/usaha'
+import { getSuratData, deleteSurat } from '@/actions/surat.actions'
 
 const SURAT_TYPES = [
     {
@@ -113,7 +114,6 @@ export default function SuratPage() {
     const [searchQuery, setSearchQuery] = useState('')
     const [pengaturan, setPengaturan] = useState<Pengaturan | null>(null)
     const [regenerating, setRegenerating] = useState<string | null>(null)
-    const supabase = createClient()
 
     useEffect(() => {
         fetchAll()
@@ -122,53 +122,31 @@ export default function SuratPage() {
 
     const fetchAll = async () => {
         setLoading(true)
-
-        // Fetch pengaturan
-        const { data: pData } = await supabase.from('pengaturan').select('*').eq('id', 1).single()
-        setPengaturan(pData)
-
-        // Fetch all surat
-        const { data, count } = await supabase
-            .from('surat')
-            .select('*', { count: 'exact' })
-            .order('created_at', { ascending: false })
-
-        const allSurat = data || []
-        setRiwayat(allSurat)
-        setTotalSurat(count || 0)
-
-        // Count per jenis
-        const counts: Record<string, number> = {}
-        allSurat.forEach(s => { counts[s.jenis_surat] = (counts[s.jenis_surat] || 0) + 1 })
-        setCountPerJenis(counts)
-
-        // Bulan ini
-        const now = new Date()
-        const thisMonth = allSurat.filter(s => {
-            const d = new Date(s.created_at)
-            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-        }).length
-        setBulanIni(thisMonth)
-
-        // Jenis terbanyak
-        let maxJenis = '-'
-        let maxCount = 0
-        Object.entries(counts).forEach(([k, v]) => {
-            if (v > maxCount) { maxCount = v; maxJenis = k }
-        })
-        setJenisTerbanyak(maxJenis !== '-' ? (JENIS_SURAT_LABELS[maxJenis as JenisSurat] || maxJenis) : '-')
-
+        try {
+            const data = await getSuratData()
+            setPengaturan(data.pengaturan)
+            setRiwayat(data.riwayat)
+            setTotalSurat(data.totalSurat)
+            setCountPerJenis(data.countPerJenis)
+            setBulanIni(data.bulanIni)
+            setJenisTerbanyak(data.jenisTerbanyak)
+        } catch (error) {
+            console.error(error)
+        }
         setLoading(false)
     }
 
     const handleDelete = async () => {
         if (!deleteId) return
-        await supabase.from('surat').delete().eq('id', deleteId)
-        setRiwayat(riwayat.filter(s => s.id !== deleteId))
-        setTotalSurat(prev => prev - 1)
+        try {
+            await deleteSurat(deleteId)
+            setRiwayat(riwayat.filter(s => s.id !== deleteId))
+            setTotalSurat(prev => prev - 1)
+        } catch (error) {
+            console.error(error)
+        }
         setShowDeleteModal(false)
         setDeleteId(null)
-        // Recount
         fetchAll()
     }
 
