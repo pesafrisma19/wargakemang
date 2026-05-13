@@ -19,11 +19,32 @@ export default function LoginPage() {
         setError('')
 
         try {
-            // Convert phone to email format for Supabase Auth
-            const email = `${phone.replace(/\D/g, '')}@wargakemang.local`
+            // Bersihkan semua spasi, strip, dan karakter non-angka
+            let cleanIdentifier = phone.replace(/\D/g, '')
+            
+            // Jika ini nomor HP (biasanya kurang dari 15 digit) dan berawalan 0, ubah ke awalan 62
+            if (cleanIdentifier.length < 15 && cleanIdentifier.startsWith('0')) {
+                cleanIdentifier = '62' + cleanIdentifier.substring(1)
+            }
+
+            let loginEmail = `${cleanIdentifier}@wargakemang.local`
+
+            // Jika input adalah NIK (16 digit), kita cari nomor HP-nya di database
+            // karena sistem Supabase Auth kita menggunakan nomor HP sebagai email utama
+            if (cleanIdentifier.length === 16) {
+                const { data: userRecord } = await supabase
+                    .from('users')
+                    .select('phone')
+                    .eq('nik', cleanIdentifier)
+                    .single()
+                
+                if (userRecord && userRecord.phone) {
+                    loginEmail = `${userRecord.phone}@wargakemang.local`
+                }
+            }
 
             const { error } = await supabase.auth.signInWithPassword({
-                email,
+                email: loginEmail,
                 password,
             })
 
@@ -77,7 +98,7 @@ export default function LoginPage() {
                                     </svg>
                                 </span>
                                 <input
-                                    type="tel"
+                                    type="text"
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
                                     className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all"
