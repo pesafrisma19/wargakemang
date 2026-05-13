@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 
 export default async function PortalBeranda() {
@@ -26,7 +27,11 @@ export default async function PortalBeranda() {
     // Cari anggota keluarga lain (jika punya no_kk)
     let keluarga: any[] = []
     if (warga?.no_kk) {
-        const { data: kel } = await supabase
+        const supabaseAdmin = createAdminClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+        const { data: kel } = await supabaseAdmin
             .from('warga')
             .select('nama, nik, hubungan_keluarga, tempat_lahir, tanggal_lahir, jenis_kelamin')
             .eq('no_kk', warga.no_kk)

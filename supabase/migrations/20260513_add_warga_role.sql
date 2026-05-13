@@ -11,3 +11,9 @@ ALTER TABLE public.users ADD CONSTRAINT users_role_check CHECK (role IN ('admin'
 -- 3. Tambahkan kolom nik untuk menghubungkan akun login dengan tabel warga
 -- Kolom ini unik agar 1 NIK hanya bisa dipakai 1 Akun
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS nik varchar(16) UNIQUE;
+
+-- 4. Tambahkan RLS Policy agar Warga bisa membaca datanya sendiri
+CREATE POLICY "Warga can read self" ON public.warga
+  FOR SELECT USING (
+    nik = (SELECT nik FROM public.users WHERE id = auth.uid())
+  );
