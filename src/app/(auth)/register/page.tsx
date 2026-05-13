@@ -95,8 +95,9 @@ export default function RegisterPage() {
                             </Link>
                         </div>
                     ) : (
-                        <form onSubmit={handleRegister} className="space-y-5">
-                        <div>
+                        <>
+                            <form onSubmit={handleRegister} className="space-y-5">
+                            <div>
                             <label className="block text-white/90 text-sm font-medium mb-2">
                                 NIK (Nomor Induk Kependudukan)
                             </label>
@@ -193,6 +194,8 @@ export default function RegisterPage() {
                             </Link>
                         </p>
                     </div>
+                    </>
+                    )}
                 </div>
             </div>
         </div>
