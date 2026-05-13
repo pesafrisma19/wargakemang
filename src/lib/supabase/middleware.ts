@@ -34,23 +34,39 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    // Protected routes
-    if (
-        !user &&
-        !request.nextUrl.pathname.startsWith('/login') &&
-        !request.nextUrl.pathname.startsWith('/register') &&
-        (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/portal'))
-    ) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/login'
-        return NextResponse.redirect(url)
+    let userRole = null;
+    if (user) {
+        // We use admin client here? No, just normal supabase since user is authenticated
+        const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single()
+        userRole = profile?.role
     }
 
-    // Redirect logged in users from login page to dashboard
-    if (user && request.nextUrl.pathname === '/login') {
-        const url = request.nextUrl.clone()
-        url.pathname = '/dashboard'
-        return NextResponse.redirect(url)
+    const isDashboard = request.nextUrl.pathname.startsWith('/dashboard')
+    const isPortal = request.nextUrl.pathname.startsWith('/portal')
+    const isLoginOrRegister = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register'
+
+    // Not logged in -> Redirect to login if trying to access protected routes
+    if (!user) {
+        if (isDashboard || isPortal) {
+            const url = request.nextUrl.clone()
+            url.pathname = '/login'
+            return NextResponse.redirect(url)
+        }
+    } else {
+        // Logged in -> Route based on role
+        if (userRole === 'warga') {
+            if (isDashboard || isLoginOrRegister) {
+                const url = request.nextUrl.clone()
+                url.pathname = '/portal'
+                return NextResponse.redirect(url)
+            }
+        } else if (userRole === 'admin' || userRole === 'rt') {
+            if (isPortal || isLoginOrRegister) {
+                const url = request.nextUrl.clone()
+                url.pathname = '/dashboard'
+                return NextResponse.redirect(url)
+            }
+        }
     }
 
     return supabaseResponse

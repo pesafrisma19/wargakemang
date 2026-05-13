@@ -1,6 +1,6 @@
 // Database Types for Warga Kemang
 
-export type UserRole = 'admin' | 'rt';
+export type UserRole = 'admin' | 'rt' | 'warga';
 
 export type JenisKelamin = 'L' | 'P';
 
@@ -30,6 +30,7 @@ export interface User {
   role: UserRole;
   rt: string | null;
   rw: string | null;
+  nik?: string | null;
   created_at: string;
 }
 

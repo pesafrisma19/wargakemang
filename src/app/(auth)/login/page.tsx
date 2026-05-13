@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
@@ -27,7 +28,7 @@ export default function LoginPage() {
             })
 
             if (error) {
-                setError('Nomor HP atau password salah')
+                setError('NIK / Nomor HP atau password salah')
                 return
             }
 
@@ -67,7 +68,7 @@ export default function LoginPage() {
                     <form onSubmit={handleLogin} className="space-y-5">
                         <div>
                             <label className="block text-white/90 text-sm font-medium mb-2">
-                                Nomor HP
+                                NIK atau Nomor HP
                             </label>
                             <div className="relative">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50">
@@ -80,7 +81,7 @@ export default function LoginPage() {
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
                                     className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all"
-                                    placeholder="08xxxxxxxxxx"
+                                    placeholder="Masukkan NIK atau No HP"
                                     required
                                 />
                             </div>
@@ -131,6 +132,15 @@ export default function LoginPage() {
                             )}
                         </button>
                     </form>
+
+                    <div className="mt-6 text-center border-t border-white/10 pt-6">
+                        <p className="text-white/80 text-sm">
+                            Belum punya akun?{' '}
+                            <Link href="/register" className="text-white font-semibold hover:underline">
+                                Daftar sebagai Warga
+                            </Link>
+                        </p>
+                    </div>
                 </div>
 
                 <p className="text-center text-white/60 text-sm mt-6">
