@@ -21,16 +21,9 @@ export default function LoginPage() {
         try {
             // Bersihkan semua spasi, strip, dan karakter non-angka
             let cleanIdentifier = phone.replace(/\D/g, '')
-            
-            // Jika ini nomor HP (biasanya kurang dari 15 digit) dan berawalan 0, ubah ke awalan 62
-            if (cleanIdentifier.length < 15 && cleanIdentifier.startsWith('0')) {
-                cleanIdentifier = '62' + cleanIdentifier.substring(1)
-            }
-
-            let loginEmail = `${cleanIdentifier}@wargakemang.local`
+            let basePhone = cleanIdentifier
 
             // Jika input adalah NIK (16 digit), kita cari nomor HP-nya di database
-            // karena sistem Supabase Auth kita menggunakan nomor HP sebagai email utama
             if (cleanIdentifier.length === 16) {
                 const { data: userRecord } = await supabase
                     .from('users')
@@ -39,17 +32,43 @@ export default function LoginPage() {
                     .single()
                 
                 if (userRecord && userRecord.phone) {
-                    loginEmail = `${userRecord.phone}@wargakemang.local`
+                    basePhone = userRecord.phone
+                } else {
+                    setError('NIK tidak terdaftar atau tidak memiliki nomor HP')
+                    setLoading(false)
+                    return
                 }
             }
 
-            const { error } = await supabase.auth.signInWithPassword({
-                email: loginEmail,
+            // Sekarang kita punya basePhone. Buat 2 variasi: 08 dan 62
+            let phone08 = basePhone;
+            let phone62 = basePhone;
+            
+            if (basePhone.startsWith('0')) {
+                phone62 = '62' + basePhone.substring(1);
+            } else if (basePhone.startsWith('62')) {
+                phone08 = '0' + basePhone.substring(2);
+            }
+
+            // Coba login dengan format 62 (Standar Baru)
+            let { error, data } = await supabase.auth.signInWithPassword({
+                email: `${phone62}@wargakemang.local`,
                 password,
             })
 
+            // Jika gagal, coba dengan format 08 (Standar Lama / Out-of-sync)
+            if (error) {
+                const retry = await supabase.auth.signInWithPassword({
+                    email: `${phone08}@wargakemang.local`,
+                    password,
+                })
+                error = retry.error
+                data = retry.data
+            }
+
             if (error) {
                 setError('NIK / Nomor HP atau password salah')
+                setLoading(false)
                 return
             }
 
