@@ -2,6 +2,13 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { redirect } from 'next/navigation'
+
+export async function logoutWarga() {
+    const supabase = await createClient()
+    await supabase.auth.signOut()
+    redirect('/login')
+}
 
 // We might need admin client just to check if NIK exists in public.warga
 // because public.warga RLS only allows Admin/RT to SELECT. A guest cannot SELECT public.warga!

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { logoutWarga } from '@/actions/auth.actions'
 
 export default async function PortalLayout({
     children,
@@ -47,7 +48,7 @@ export default async function PortalLayout({
                                 <p className="text-xs text-emerald-100">Warga RT {profile?.rt || '-'} / RW {profile?.rw || '-'}</p>
                             </div>
                             
-                            <form action="/auth/signout" method="post">
+                            <form action={logoutWarga}>
                                 <button
                                     type="submit"
                                     className="p-2 text-emerald-100 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
